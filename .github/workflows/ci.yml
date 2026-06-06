@@ -55,6 +55,27 @@ jobs:
       - name: Scan for security vulnerabilities in JavaScript dependencies
         run: bin/importmap audit
 
+  test_js:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v6
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install JS dependencies
+        run: |
+          npm install
+
+      - name: Run frontend tests
+        env:
+          CI: true
+        run: |
+          npm test
+
   lint:
     runs-on: ubuntu-latest
     env:
