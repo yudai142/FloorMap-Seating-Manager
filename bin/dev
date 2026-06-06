@@ -8,4 +8,5 @@ if File.exist?(pid_file)
 	end
 end
 
-exec "./bin/rails", "server", *ARGV
+args = ["server", "-b", "0.0.0.0", "-p", ENV.fetch("PORT", "3000")] + ARGV
+exec "./bin/rails", *args
