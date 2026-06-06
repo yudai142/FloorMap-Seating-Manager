@@ -1,3 +1,41 @@
+FROM ruby:3.2-slim
+
+ENV LANG C.UTF-8
+ENV RAILS_ENV production
+
+RUN apt-get update && apt-get install -y \
+  build-essential \
+  libpq-dev \
+  nodejs \
+  curl \
+  git \
+  postgresql-client \
+  && apt-get clean && rm -rf /var/lib/apt/lists/*
+
+RUN gem install bundler -v 2.4.13
+
+WORKDIR /app
+
+# gems
+COPY Gemfile Gemfile.lock ./
+RUN bundle config set --local without 'development test' || true
+RUN bundle install --jobs 4 --retry 3
+
+# node / yarn assets
+COPY package.json yarn.lock ./
+RUN corepack enable || true
+RUN corepack prepare yarn@stable --activate || true
+RUN yarn install --frozen-lockfile --production || true
+
+# app
+COPY . .
+
+# compile assets (if any)
+RUN if [ -f bin/rails ]; then bundle exec rails assets:precompile; fi || true
+
+EXPOSE 3000
+
+CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
 # syntax=docker/dockerfile:1
 # check=error=true
 
