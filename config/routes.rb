@@ -16,4 +16,5 @@ Rails.application.routes.draw do
   end
 
   root to: 'rooms#index'
+  get 'editor', to: 'editors#show'
 end
