@@ -1,12 +1,20 @@
 class RoomsController < ApplicationController
   def index
     @rooms = Room.all
-    render inertia: 'Rooms/Index', props: { rooms: @rooms.as_json(only: %i[id name width height]) }
+    if defined?(InertiaRails)
+      render inertia: 'Rooms/Index', props: { rooms: @rooms.as_json(only: %i[id name width height]) }
+    else
+      render template: 'rooms/index'
+    end
   end
 
   def show
     @room = Room.find(params[:id])
-    render inertia: 'Rooms/Show', props: { room: @room.as_json, seats: @room.seats.as_json }
+    if defined?(InertiaRails)
+      render inertia: 'Rooms/Show', props: { room: @room.as_json, seats: @room.seats.as_json }
+    else
+      render template: 'rooms/show'
+    end
   end
 
   def create
@@ -14,7 +22,11 @@ class RoomsController < ApplicationController
     if @room.save
       redirect_to rooms_path, notice: 'Room created'
     else
-      render inertia: 'Rooms/New', props: { errors: @room.errors.full_messages }
+      if defined?(InertiaRails)
+        render inertia: 'Rooms/New', props: { errors: @room.errors.full_messages }
+      else
+        render template: 'rooms/new'
+      end
     end
   end
 

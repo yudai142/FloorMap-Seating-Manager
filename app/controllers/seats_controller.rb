@@ -5,7 +5,14 @@ class SeatsController < ApplicationController
     if @seat.save
       redirect_to room_path(@room), notice: 'Seat created'
     else
-      render inertia: 'Rooms/Show', props: { room: @room.as_json, seats: @room.seats.as_json, errors: @seat.errors.full_messages }
+      if defined?(InertiaRails)
+        render inertia: 'Rooms/Show', props: { room: @room.as_json, seats: @room.seats.as_json, errors: @seat.errors.full_messages }
+      else
+        @room = @room
+        @seats = @room.seats
+        @errors = @seat.errors.full_messages
+        render template: 'rooms/show'
+      end
     end
   end
 
@@ -14,7 +21,14 @@ class SeatsController < ApplicationController
     if @seat.update(seat_params)
       redirect_to room_path(@seat.room), notice: 'Seat updated'
     else
-      render inertia: 'Rooms/Show', props: { room: @seat.room.as_json, seats: @seat.room.seats.as_json, errors: @seat.errors.full_messages }
+      if defined?(InertiaRails)
+        render inertia: 'Rooms/Show', props: { room: @seat.room.as_json, seats: @seat.room.seats.as_json, errors: @seat.errors.full_messages }
+      else
+        @room = @seat.room
+        @seats = @seat.room.seats
+        @errors = @seat.errors.full_messages
+        render template: 'rooms/show'
+      end
     end
   end
 
