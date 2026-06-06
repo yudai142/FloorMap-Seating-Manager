@@ -1,0 +1,17 @@
+---
+title: ISSUE-006: Floor page — checkin/checkout UI
+labels: [feature, frontend]
+---
+
+概要
+---
+公開されたフロアページ上で、座席をクリックして名前を入力することで着席登録／離席ができるUIを作成します。
+
+受け入れ基準
+---
+- クリックで着席・離席ができる
+- API 経由で状態が保存され、ページ更新で反映される
+
+ブランチ
+---
+`feature/ISSUE-006-floor-page`
