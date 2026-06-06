@@ -1,0 +1,17 @@
+services:
+  - type: web
+    name: floormap-web
+    env: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    buildCommand: ''
+    startCommand: bundle exec puma -C config/puma.rb
+    envVars:
+      - key: RAILS_ENV
+        value: production
+      - key: RAILS_SERVE_STATIC_FILES
+        value: 'true'
+    secrets:
+      - key: DATABASE_URL
+      - key: RAILS_MASTER_KEY
+    healthCheckPath: '/up'
