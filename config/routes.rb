@@ -17,4 +17,10 @@ Rails.application.routes.draw do
 
   root to: 'rooms#index'
   get 'editor', to: 'editors#show'
+  resources :seats, only: [] do
+    member do
+      post :check_in
+      post :check_out
+    end
+  end
 end
