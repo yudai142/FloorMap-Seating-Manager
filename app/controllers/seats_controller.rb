@@ -18,6 +18,18 @@ class SeatsController < ApplicationController
     end
   end
 
+  def check_in
+    @seat = Seat.find(params[:id])
+    @seat.update(occupied: true)
+    head :no_content
+  end
+
+  def check_out
+    @seat = Seat.find(params[:id])
+    @seat.update(occupied: false)
+    head :no_content
+  end
+
   private
 
   def seat_params
