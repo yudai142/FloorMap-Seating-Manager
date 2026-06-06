@@ -1,0 +1,11 @@
+#!/usr/bin/env ruby
+pid_file = File.join(__dir__, '..', 'tmp', 'pids', 'server.pid')
+if File.exist?(pid_file)
+	begin
+		File.delete(pid_file)
+	rescue => _e
+		# ignore
+	end
+end
+
+exec "./bin/rails", "server", *ARGV
