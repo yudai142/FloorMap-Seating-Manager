@@ -18,7 +18,13 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          set -e
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Scan for common Rails security vulnerabilities using static analysis
         run: bin/brakeman --no-pager
@@ -38,7 +44,13 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          set -e
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Scan for security vulnerabilities in JavaScript dependencies
         run: bin/importmap audit
@@ -55,7 +67,13 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          set -e
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Prepare RuboCop cache
         uses: actions/cache@v4
@@ -101,7 +119,13 @@ jobs:
       - name: Set up Ruby
         uses: ruby/setup-ruby@v1
         with:
-          bundler-cache: true
+          bundler-cache: false
+
+      - name: Install gems
+        run: |
+          set -e
+          bundle config set frozen false || true
+          bundle install --jobs 4
 
       - name: Run tests
         env:
