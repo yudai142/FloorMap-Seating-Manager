@@ -1,0 +1,56 @@
+FROM ruby:3.2-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+ENV RAILS_ENV=development
+
+WORKDIR /app
+
+# System deps
+RUN apt-get update -qq && \
+    apt-get install -y --no-install-recommends \
+      build-essential \
+      git \
+      curl \
+      postgresql-client \
+      libpq-dev \
+      libyaml-dev \
+      pkg-config \
+      nodejs \
+      npm \
+      ca-certificates \
+    && rm -rf /var/lib/apt/lists/*
+
+# Yarn
+RUN npm install -g yarn pnpm --silent || true
+
+# Bundler
+RUN gem install bundler --no-document
+
+# Copy dependency manifests first for caching
+COPY Gemfile Gemfile.lock* ./
+COPY package.json package-lock.json* yarn.lock* ./
+
+# Install gems (including development/test) into shared bundle path
+RUN bundle config set path '/usr/local/bundle' && \
+  bundle config set without '' || true && \
+  bundle install --jobs 4 --retry 3
+
+# Install frontend deps
+RUN if [ -f yarn.lock ]; then \
+      yarn install --frozen-lockfile || true; \
+    elif [ -f package-lock.json ]; then \
+      npm ci --silent || true; \
+    else \
+      npm install --silent || true; \
+    fi
+
+# Copy application
+COPY . .
+
+RUN chmod +x bin/* || true
+
+EXPOSE 3000
+RUN apt-get update -qq && apt-get install -y --no-install-recommends tini || true
+
+ENTRYPOINT ["/usr/bin/tini", "--"]
+CMD ["./bin/dev"]

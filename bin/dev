@@ -1,0 +1,12 @@
+#!/usr/bin/env ruby
+pid_file = File.join(__dir__, '..', 'tmp', 'pids', 'server.pid')
+if File.exist?(pid_file)
+	begin
+		File.delete(pid_file)
+	rescue => _e
+		# ignore
+	end
+end
+
+args = ["server", "-b", "0.0.0.0", "-p", ENV.fetch("PORT", "3000")] + ARGV
+exec "./bin/rails", *args

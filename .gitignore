@@ -1,0 +1,22 @@
+# But do not ignore this .gitignore file itself
+!.gitignore
+
+# Allow the .github directory and the workflows subdir so we can unignore ci
+.github/ISSUES/*
+.github/*.md
+
+# Keep git metadata safe
+/.git
+
+# Optional: ignore typical Rails / Node artifacts (they will be ignored anyway)
+log/
+tmp/
+node_modules/
+vendor/bundle/
+public/packs/
+public/assets/
+coverage/
+
+# Ignore key files for decrypting credentials and more.
+/config/*.key
+
