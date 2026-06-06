@@ -1,5 +1,5 @@
 ---
-title: ISSUE-009: Seed sample layouts and README
+title: ISSUE-009: サンプルレイアウトのseedとREADME
 labels: [docs, data]
 ---
 

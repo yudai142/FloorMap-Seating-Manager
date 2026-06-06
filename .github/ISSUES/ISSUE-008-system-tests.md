@@ -1,5 +1,5 @@
 ---
-title: ISSUE-008: System tests for editor and floor page
+title: ISSUE-008: エディタとフロアページのシステムテスト
 labels: [test, system]
 ---
 

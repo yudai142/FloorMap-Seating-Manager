@@ -1,5 +1,5 @@
 ---
-title: ISSUE-001: Project scaffold — Rails + Inertia + React + Vite + Tailwind
+title: ISSUE-001: プロジェクト骨組み — Rails + Inertia + React + Vite + Tailwind
 labels: [project, scaffold]
 ---
 

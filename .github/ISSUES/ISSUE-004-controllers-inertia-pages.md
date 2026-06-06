@@ -1,5 +1,5 @@
 ---
-title: ISSUE-004: Controllers & Inertia pages
+title: ISSUE-004: コントローラとInertiaページ
 labels: [backend, frontend]
 ---
 

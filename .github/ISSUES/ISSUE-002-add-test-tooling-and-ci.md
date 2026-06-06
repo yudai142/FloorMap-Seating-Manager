@@ -1,5 +1,5 @@
 ---
-title: ISSUE-002: Add test tooling & CI
+title: ISSUE-002: テストツールとCIを追加
 labels: [ci, test]
 ---
 

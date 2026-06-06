@@ -1,5 +1,5 @@
 ---
-title: ISSUE-007: ActionCable RoomChannel (realtime)
+title: ISSUE-007: ActionCable RoomChannel（リアルタイム）
 labels: [realtime, backend, frontend]
 ---
 

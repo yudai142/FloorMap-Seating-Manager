@@ -1,5 +1,5 @@
 ---
-title: ISSUE-006: Floor page — checkin/checkout UI
+title: ISSUE-006: フロアページ — チェックイン/チェックアウトUI
 labels: [feature, frontend]
 ---
 

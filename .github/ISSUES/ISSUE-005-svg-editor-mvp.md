@@ -1,5 +1,5 @@
 ---
-title: ISSUE-005: SVG editor MVP
+title: ISSUE-005: SVGエディタ MVP
 labels: [frontend, feature]
 ---
 

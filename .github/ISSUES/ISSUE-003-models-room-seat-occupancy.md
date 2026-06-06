@@ -1,5 +1,5 @@
 ---
-title: ISSUE-003: Models — Room / Seat / Occupancy
+title: ISSUE-003: モデル — 部屋(Room) / 座席(Seat) / 着席(Occupancy)
 labels: [backend, model]
 ---
 
