@@ -20,14 +20,22 @@ class SeatsController < ApplicationController
 
   def check_in
     @seat = Seat.find(params[:id])
-    @seat.update(occupied: true)
-    head :no_content
+    if @seat.update(occupied: true)
+      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied]) })
+      head :no_content
+    else
+      render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   def check_out
     @seat = Seat.find(params[:id])
-    @seat.update(occupied: false)
-    head :no_content
+    if @seat.update(occupied: false)
+      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied]) })
+      head :no_content
+    else
+      render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
+    end
   end
 
   private
