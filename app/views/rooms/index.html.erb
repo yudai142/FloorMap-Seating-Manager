@@ -16,7 +16,7 @@
 <div id="new-room-form" style="display:none;margin-top:16px;padding:12px;border:1px solid #e5e7eb;border-radius:6px;max-width:480px;">
   <h2>上面図を新規作成</h2>
 
-  <%= form_with url: rooms_path, local: true do |f| %>
+  <%= form_with model: Room.new, local: true do |f| %>
     <div style="margin-bottom:8px;">
       <%= f.label :name, '名前' %><br>
       <%= f.text_field :name, required: true, style: 'width:100%;padding:8px;border:1px solid #cbd5e1;border-radius:4px;' %>
