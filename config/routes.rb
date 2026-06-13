@@ -17,10 +17,21 @@ Rails.application.routes.draw do
 
   root to: 'rooms#index'
   get 'editor', to: 'editors#show'
+
   resources :seats, only: [] do
     member do
       post :check_in
       post :check_out
+    end
+  end
+
+  resources :notifications, only: %i[index destroy] do
+    collection do
+      get :unread_count
+      patch :mark_all_as_read
+    end
+    member do
+      patch :mark_as_read
     end
   end
 end

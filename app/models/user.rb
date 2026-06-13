@@ -2,6 +2,8 @@ class User < ApplicationRecord
   devise :database_authenticatable, :registerable,
          :recoverable, :rememberable, :trackable, :validatable
 
+  has_many :notifications, dependent: :destroy
+
   enum role: { user: 0, manager: 1, admin: 2 }
 
   validates :name, presence: true
