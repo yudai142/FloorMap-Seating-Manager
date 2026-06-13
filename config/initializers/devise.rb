@@ -17,7 +17,6 @@ Devise.setup do |config|
   config.remember_for = 2.weeks
 
   config.expire_all_remember_me_on_sign_out = true
-  config.extend_remember_period_on_sign_in = false
 
   # Timeoutable configuration - session expires after 2 hours of inactivity
   config.timeout_in = 2.hours
