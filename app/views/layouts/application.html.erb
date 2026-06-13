@@ -22,8 +22,10 @@
     <%= stylesheet_link_tag :app %>
 
     <%# Vite client and application entry point %>
-    <script type="module" src="/vite-dev-server/@vite/client"></script>
-    <script type="module" src="/vite-dev-server/app/javascript/entrypoints/application.jsx"></script>
+    <% if Rails.env.development? %>
+      <script type="module" src="http://localhost:3036/vite-dev/@vite/client"></script>
+      <script type="module" src="http://localhost:3036/vite-dev/app/javascript/entrypoints/application.jsx"></script>
+    <% end %>
   </head>
 
   <body>

@@ -21,6 +21,7 @@ services:
       - bundle:/usr/local/bundle
     ports:
       - "3000:3000"
+      - "3036:3036"
     environment:
       DATABASE_HOST: db
       DATABASE_URL: postgres://postgres:password@db:5432/floormap_development
