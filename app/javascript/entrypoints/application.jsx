@@ -11,3 +11,14 @@ createInertiaApp({
     createRoot(el).render(<App {...props} />)
   }
 })
+
+// Register Service Worker for PWA support
+if ('serviceWorker' in navigator && !navigator.serviceWorker.controller) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/service-worker.js', {
+      scope: '/'
+    }).catch(error => {
+      console.warn('Service Worker registration failed:', error)
+    })
+  })
+}

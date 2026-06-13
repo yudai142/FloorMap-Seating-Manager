@@ -122,9 +122,9 @@ export default function RoomsShow({ room, seats: initialSeats }) {
           )
         )}
 
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* SVGキャンバス */}
-          <div className="lg:col-span-3">
+          <div className="lg:col-span-3 order-2 lg:order-1">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               {room.width > 0 && room.height > 0 ? (
                 <div>
@@ -190,7 +190,7 @@ export default function RoomsShow({ room, seats: initialSeats }) {
           </div>
 
           {/* 座席リスト */}
-          <div className="lg:col-span-1">
+          <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <h2 className="text-lg font-semibold text-slate-800 mb-4">座席一覧</h2>
               <div className="space-y-2 max-h-96 overflow-y-auto">
