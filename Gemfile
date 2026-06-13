@@ -26,6 +26,13 @@ gem "inertia_rails"
 # Vite for front-end bundling
 gem "vite_ruby"
 
+# Authentication
+gem "devise"
+gem "devise-i18n"
+
+# Authorization
+gem "pundit"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
