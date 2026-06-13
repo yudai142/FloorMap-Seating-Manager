@@ -49,6 +49,7 @@ Rails.application.routes.draw do
   end
 
   resources :notification_preferences, only: %i[index update]
+  get "users/settings", to: "users#settings", as: "user_settings"
   get "two_factor/setup", to: "two_factor#setup", as: "two_factor_setup"
   post "two_factor/confirm", to: "two_factor#confirm", as: "two_factor_confirm"
   delete "two_factor/disable", to: "two_factor#disable", as: "two_factor_disable"
