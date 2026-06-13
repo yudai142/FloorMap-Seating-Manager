@@ -1,8 +1,9 @@
 import React, { useState } from 'react'
 import { useForm } from '@inertiajs/react'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
+import Pagination from '../ui/Pagination'
 
-export default function RoomsIndex({ rooms, errors: serverErrors }) {
+export default function RoomsIndex({ rooms, errors: serverErrors, pagination, search_query }) {
   const [showForm, setShowForm] = useState(false)
   const [alert, setAlert] = useState(null)
   const { data, setData, post, processing } = useForm({
@@ -55,6 +56,30 @@ export default function RoomsIndex({ rooms, errors: serverErrors }) {
           )
         )}
 
+        <div className="mb-6">
+          <form method="GET" className="flex gap-2">
+            <input
+              type="text"
+              name="q[name_cont]"
+              placeholder="上面図の名前で検索..."
+              defaultValue={search_query?.name_cont || ''}
+              className="flex-1 px-4 py-2 border border-slate-300 rounded-lg
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400"
+            />
+            <button
+              type="submit"
+              className="px-6 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg
+                       hover:bg-slate-300 transition-colors">
+              検索
+            </button>
+          </form>
+          {pagination?.total_count > 0 && (
+            <p className="text-sm text-slate-500 mt-2">
+              合計 {pagination.total_count} 件
+            </p>
+          )}
+        </div>
+
         {rooms.length > 0 ? (
           <div className="mb-8">
             <h2 className="text-xl font-semibold text-slate-700 mb-4">利用可能な上面図</h2>
@@ -81,10 +106,19 @@ export default function RoomsIndex({ rooms, errors: serverErrors }) {
                 </div>
               ))}
             </div>
+
+            {pagination && (
+              <Pagination
+                currentPage={pagination.current_page}
+                totalPages={pagination.total_pages}
+                baseUrl="/"
+                queryParams={search_query?.name_cont ? `&q[name_cont]=${encodeURIComponent(search_query.name_cont)}` : ''}
+              />
+            )}
           </div>
         ) : (
           <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-blue-700 mb-8">
-            上面図がまだ作成されていません。作成から始めましょう。
+            {search_query?.name_cont ? '検索条件に合致する上面図がありません。' : '上面図がまだ作成されていません。作成から始めましょう。'}
           </div>
         )}
 

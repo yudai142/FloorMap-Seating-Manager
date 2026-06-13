@@ -4,11 +4,19 @@ class RoomsController < ApplicationController
 
   def index
     authorize Room
-    @rooms = Room.all
+    @q = Room.ransack(params[:q])
+    @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
+
     render inertia: 'Rooms/Index', props: {
       rooms: @rooms.as_json(only: %i[id name width height]),
       errors: [],
-      can_create: policy(Room).create?
+      can_create: policy(Room).create?,
+      pagination: {
+        current_page: @rooms.current_page,
+        total_pages: @rooms.total_pages,
+        total_count: @rooms.total_count
+      },
+      search_query: params[:q]
     }
   end
 
@@ -26,10 +34,19 @@ class RoomsController < ApplicationController
     if @room.save
       redirect_to rooms_path, notice: '上面図を作成しました'
     else
+      @q = Room.ransack(params[:q])
+      @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
+
       render inertia: 'Rooms/Index', props: {
-        rooms: Room.all.as_json(only: %i[id name width height]),
+        rooms: @rooms.as_json(only: %i[id name width height]),
         errors: @room.errors.messages,
-        can_create: policy(Room).create?
+        can_create: policy(Room).create?,
+        pagination: {
+          current_page: @rooms.current_page,
+          total_pages: @rooms.total_pages,
+          total_count: @rooms.total_count
+        },
+        search_query: params[:q]
       }, status: :unprocessable_entity
     end
   end

@@ -76,6 +76,21 @@ group :development, :test do
   gem "rswag-api"
   gem "rswag-ui"
   gem "rswag-specs"
+
+  # Test Coverage Report
+  gem "simplecov", require: false
+
+  # Pagination
+  gem "kaminari"
+
+  # Search
+  gem "ransack"
+
+  # Audit Trail
+  gem "paper_trail"
+
+  # Admin Dashboard
+  gem "rails_admin"
 end
 
 group :development do
@@ -84,6 +99,11 @@ group :development do
 
   # N+1 query detection
   gem "bullet"
+
+  # Performance profiling
+  gem "rack-mini-profiler"
+  gem "memory_profiler"
+  gem "stackprof"
 end
 
 group :test do
@@ -96,4 +116,11 @@ group :production do
   # Error tracking
   gem "sentry-ruby"
   gem "sentry-rails"
+
+  # Caching
+  gem "redis"
+
+  # Two-Factor Authentication
+  gem "devise-two-factor"
+  gem "rqrcode"
 end
