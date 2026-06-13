@@ -28,6 +28,12 @@ gem "solid_cache"
 gem "solid_queue"
 gem "solid_cable"
 
+# Inertia.js for Rails
+gem "inertia_rails"
+
+# Vite for front-end bundling
+gem "vite_ruby"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 

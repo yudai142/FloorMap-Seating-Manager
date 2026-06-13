@@ -34,8 +34,8 @@ class SeatsController < ApplicationController
 
   def check_in
     @seat = Seat.find(params[:id])
-    if @seat.update(occupied: true)
-      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied]) })
+    if @seat.update(occupied: true, occupant_name: params[:occupant_name])
+      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied occupant_name]) })
       head :no_content
     else
       render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
@@ -44,8 +44,8 @@ class SeatsController < ApplicationController
 
   def check_out
     @seat = Seat.find(params[:id])
-    if @seat.update(occupied: false)
-      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied]) })
+    if @seat.update(occupied: false, occupant_name: nil)
+      ActionCable.server.broadcast("room_#{@seat.room_id}", { type: 'seat_update', seat: @seat.as_json(only: %i[id x y label occupied occupant_name]) })
       head :no_content
     else
       render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
@@ -55,6 +55,6 @@ class SeatsController < ApplicationController
   private
 
   def seat_params
-    params.require(:seat).permit(:label, :x, :y, :occupied)
+    params.require(:seat).permit(:label, :x, :y, :occupied, :occupant_name)
   end
 end

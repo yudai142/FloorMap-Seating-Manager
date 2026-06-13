@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_06_080500) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_13_062103) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -25,6 +25,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_06_080500) do
   create_table "seats", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "label", null: false
+    t.string "occupant_name"
     t.boolean "occupied", default: false, null: false
     t.bigint "room_id", null: false
     t.datetime "updated_at", null: false

@@ -227,6 +227,69 @@ bin/rails db:seed
 
 上記を実行すると `Demo Hall` という部屋と、グリッド配置の座席が作成されます。開発中は `bin/rails db:seed` を再実行しても重複が作られないように実装しています。
 
+## 開発・利用手順
+
+### セットアップ
+
+```bash
+# Ruby gem と Node パッケージをインストール
+bundle install
+npm install
+
+# データベースを作成・マイグレーション
+bundle exec rails db:create db:migrate
+
+# （オプション）サンプルレイアウトをロード
+bundle exec rails db:seed
+```
+
+### 開発サーバーの起動
+
+Docker を使う場合:
+
+```bash
+docker compose up
+```
+
+ローカル環境で起動する場合:
+
+```bash
+# ターミナル1: Rails サーバー + Vite 開発サーバー
+bin/dev
+
+# または個別に起動:
+# ターミナル1: Rails
+bundle exec rails server
+
+# ターミナル2: Vite
+npm run dev
+```
+
+### 利用フロー
+
+1. **ブラウザで `http://localhost:3000` にアクセス**
+   - ルーム一覧ページが表示されます
+
+2. **ルームを作成**
+   - 「Create New Room」ボタンをクリック
+   - 部屋の名前と寸法（幅・高さ）を入力して作成
+
+3. **SVG エディタで座席を配置**
+   - 作成したルームの [Edit] リンクをクリック
+   - SVG キャンバス上をクリックして座席を追加
+   - 座席をドラッグして移動（ドラッグを離すと自動保存）
+
+4. **フロアページで着席管理**
+   - ルーム名をクリックしてフロアページにアクセス
+   - 座席をクリックして名前を入力 → チェックイン
+   - 着席中の座席をクリック → チェックアウト
+   - **複数タブで同じ部屋を開くと、ActionCable 経由でリアルタイム同期される**
+
+### 環境変数（本番デプロイ時）
+
+- `REDIS_URL`: ActionCable 用 Redis（production 環境）
+- `DATABASE_URL`: PostgreSQL接続文字列
+- `RAILS_MASTER_KEY`: Rails credentials キー
 
 ### 10-3. キャッチアップ不足の懸念
 
