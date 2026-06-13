@@ -15,6 +15,11 @@ node_modules/
 vendor/bundle/
 public/packs/
 public/assets/
+public/vite-dev/
+public/vite-test/
+public/vite-prod/
+dist/
+.env
 coverage/
 
 # Ignore key files for decrypting credentials and more.

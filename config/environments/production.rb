@@ -86,4 +86,7 @@ Rails.application.configure do
   #
   # Skip DNS rebinding protection for the default health check endpoint.
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
+
+  # Inertia.js configuration for production
+  config.inertia.check_server_side_errors = true
 end

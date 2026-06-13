@@ -6,7 +6,10 @@
   "scripts": {
     "dev": "vite",
     "build": "vite build",
-    "test": "vitest --run"
+    "build:test": "vite build --mode test",
+    "preview": "vite preview",
+    "test": "vitest --run",
+    "test:watch": "vitest"
   },
   "dependencies": {
     "@inertiajs/react": "^2.0.0",
