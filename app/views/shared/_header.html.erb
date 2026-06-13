@@ -11,6 +11,34 @@
         </a>
       <% end %>
 
+      <!-- 通知ベル -->
+      <div class="relative" id="notifications-menu">
+        <button id="notifications-btn"
+          class="relative px-3 py-1.5 bg-slate-700 hover:bg-slate-600 rounded-lg text-sm
+                 transition-colors flex items-center gap-2">
+          <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+          </svg>
+          <span id="unread-count" class="hidden absolute -top-1 -right-1 bg-red-500 text-xs rounded-full w-5 h-5 flex items-center justify-center">
+            0
+          </span>
+        </button>
+
+        <div id="notifications-dropdown"
+          class="absolute right-0 mt-2 w-80 bg-slate-800 rounded-lg shadow-lg border border-slate-700 hidden z-50 max-h-96 overflow-y-auto">
+          <div class="sticky top-0 bg-slate-800 border-b border-slate-700 px-4 py-3 flex items-center justify-between rounded-t-lg">
+            <h3 class="font-semibold text-white">通知</h3>
+            <button id="mark-all-read-btn" class="text-xs text-cyan-400 hover:text-cyan-300">
+              すべてを既読にする
+            </button>
+          </div>
+          <div id="notifications-list" class="divide-y divide-slate-700">
+            <div class="px-4 py-3 text-slate-400 text-sm">通知はまだありません</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ユーザーメニュー -->
       <div class="relative" id="user-menu">
         <button id="user-menu-btn"
           class="px-3 py-1.5 bg-slate-700 hover:bg-slate-600 text-white rounded-lg text-sm
@@ -39,6 +67,7 @@
 
 <script>
   document.addEventListener('DOMContentLoaded', function () {
+    // ユーザーメニュー
     const userMenuBtn = document.getElementById('user-menu-btn');
     const userDropdown = document.getElementById('user-dropdown');
 
@@ -53,5 +82,62 @@
         }
       });
     }
+
+    // 通知メニュー
+    const notificationsBtn = document.getElementById('notifications-btn');
+    const notificationsDropdown = document.getElementById('notifications-dropdown');
+    const unreadCount = document.getElementById('unread-count');
+    const notificationsList = document.getElementById('notifications-list');
+    const markAllReadBtn = document.getElementById('mark-all-read-btn');
+
+    if (notificationsBtn && notificationsDropdown) {
+      notificationsBtn.addEventListener('click', function () {
+        notificationsDropdown.classList.toggle('hidden');
+        loadNotifications();
+      });
+
+      document.addEventListener('click', function (e) {
+        if (!document.getElementById('notifications-menu').contains(e.target)) {
+          notificationsDropdown.classList.add('hidden');
+        }
+      });
+
+      if (markAllReadBtn) {
+        markAllReadBtn.addEventListener('click', async function () {
+          try {
+            const response = await fetch('/notifications/mark_all_as_read', {
+              method: 'PATCH',
+              headers: {
+                'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content
+              }
+            });
+            if (response.ok) {
+              loadNotifications();
+            }
+          } catch (err) {
+            console.error('Error marking all as read:', err);
+          }
+        });
+      }
+    }
+
+    // 通知を読み込み
+    function loadNotifications() {
+      fetch('/notifications/unread_count')
+        .then(r => r.json())
+        .then(data => {
+          if (data.unread_count > 0) {
+            unreadCount.textContent = data.unread_count;
+            unreadCount.classList.remove('hidden');
+          } else {
+            unreadCount.classList.add('hidden');
+          }
+        })
+        .catch(err => console.error('Error loading notifications:', err));
+    }
+
+    // 定期的に未読数を更新
+    setInterval(loadNotifications, 30000); // 30秒ごと
+    loadNotifications(); // 初期読み込み
   });
 </script>
