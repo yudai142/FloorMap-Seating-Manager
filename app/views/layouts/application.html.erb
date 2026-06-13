@@ -19,11 +19,11 @@
     <link rel="apple-touch-icon" href="/icon.png">
 
     <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%= stylesheet_link_tag :app, "data-turbo-track": "reload" %>
+    <%= stylesheet_link_tag :app %>
 
     <%# Vite client and application entry point %>
-    <%= vite_client_tag %>
-    <%= vite_javascript_tag 'application' %>
+    <script type="module" src="/vite-dev-server/@vite/client"></script>
+    <script type="module" src="/vite-dev-server/app/javascript/entrypoints/application.jsx"></script>
   </head>
 
   <body>

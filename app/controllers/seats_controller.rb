@@ -3,32 +3,18 @@ class SeatsController < ApplicationController
     @room = Room.find(params[:room_id])
     @seat = @room.seats.build(seat_params)
     if @seat.save
-      redirect_to room_path(@room), notice: 'Seat created'
+      render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :created
     else
-      if defined?(InertiaRails)
-        render inertia: 'Rooms/Show', props: { room: @room.as_json, seats: @room.seats.as_json, errors: @seat.errors.full_messages }
-      else
-        @room = @room
-        @seats = @room.seats
-        @errors = @seat.errors.full_messages
-        render template: 'rooms/show'
-      end
+      render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
     end
   end
 
   def update
     @seat = Seat.find(params[:id])
     if @seat.update(seat_params)
-      redirect_to room_path(@seat.room), notice: 'Seat updated'
+      render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
     else
-      if defined?(InertiaRails)
-        render inertia: 'Rooms/Show', props: { room: @seat.room.as_json, seats: @seat.room.seats.as_json, errors: @seat.errors.full_messages }
-      else
-        @room = @seat.room
-        @seats = @seat.room.seats
-        @errors = @seat.errors.full_messages
-        render template: 'rooms/show'
-      end
+      render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
     end
   end
 

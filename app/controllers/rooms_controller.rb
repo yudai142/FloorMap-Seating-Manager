@@ -1,26 +1,18 @@
 class RoomsController < ApplicationController
   def index
     @rooms = Room.all
-    if defined?(InertiaRails)
-      render inertia: 'Rooms/Index', props: {
-        rooms: @rooms.as_json(only: %i[id name width height]),
-        errors: []
-      }
-    else
-      render template: 'rooms/index'
-    end
+    render inertia: 'Rooms/Index', props: {
+      rooms: @rooms.as_json(only: %i[id name width height]),
+      errors: []
+    }
   end
 
   def show
     @room = Room.find(params[:id])
-    if defined?(InertiaRails)
-      render inertia: 'Rooms/Show', props: {
-        room: @room.as_json(only: %i[id name width height]),
-        seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name])
-      }
-    else
-      render template: 'rooms/show'
-    end
+    render inertia: 'Rooms/Show', props: {
+      room: @room.as_json(only: %i[id name width height]),
+      seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name])
+    }
   end
 
   def create
@@ -28,14 +20,10 @@ class RoomsController < ApplicationController
     if @room.save
       redirect_to rooms_path, notice: 'Room created'
     else
-      if defined?(InertiaRails)
-        render inertia: 'Rooms/Index', props: {
-          rooms: Room.all.as_json(only: %i[id name width height]),
-          errors: @room.errors.full_messages
-        }
-      else
-        render template: 'rooms/index'
-      end
+      render inertia: 'Rooms/Index', props: {
+        rooms: Room.all.as_json(only: %i[id name width height]),
+        errors: @room.errors.full_messages
+      }
     end
   end
 
