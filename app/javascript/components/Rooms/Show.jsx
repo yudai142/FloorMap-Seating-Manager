@@ -78,144 +78,139 @@ export default function RoomsShow({ room, seats: initialSeats }) {
   }
 
   return (
-    <div style={{ padding: '16px' }}>
-      <h1>{room.name}</h1>
-      <p>Size: {room.width} x {room.height}</p>
-
-      {room.width > 0 && room.height > 0 ? (
-        <div>
-          <svg
-            width={Math.min(room.width, 600)}
-            height={Math.min(room.height, 400)}
-            style={{
-              border: '1px solid #ccc',
-              transform: `scale(${Math.min(600, room.width) / room.width})`
-            }}
-            viewBox={`0 0 ${room.width} ${room.height}`}
-          >
-            {seats.map((seat) => (
-              <g
-                key={seat.id}
-                transform={`translate(${seat.x}, ${seat.y})`}
-                onClick={() => handleSeatClick(seat)}
-                style={{ cursor: 'pointer' }}
-              >
-                <circle
-                  r="12"
-                  fill={seat.occupied ? '#f87171' : '#4ade80'}
-                  stroke="#333"
-                  strokeWidth="1"
-                />
-                <text
-                  x="16"
-                  y="4"
-                  fontSize="10"
-                  fill="#000"
-                  style={{ pointerEvents: 'none' }}
-                >
-                  {seat.label}
-                </text>
-                {seat.occupied && (
-                  <text
-                    x="16"
-                    y="14"
-                    fontSize="8"
-                    fill="#666"
-                    style={{ pointerEvents: 'none' }}
-                  >
-                    {seat.occupant_name}
-                  </text>
-                )}
-              </g>
-            ))}
-          </svg>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <a href="/" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium mb-2 inline-block">
+            ← 戻る
+          </a>
+          <h1 className="text-3xl font-bold text-slate-800">{room.name}</h1>
+          <p className="text-slate-500 text-sm mt-1">{room.width} × {room.height}</p>
         </div>
-      ) : (
-        <div>Room has no dimensions configured.</div>
-      )}
 
-      <h2>Seats</h2>
-      <ul>
-        {seats.map((s) => (
-          <li key={s.id}>
-            {s.label} — ({s.x},{s.y})
-            {s.occupied ? ` 🟢 Occupied by ${s.occupant_name}` : ' ⚪ Free'}
-          </li>
-        ))}
-      </ul>
+        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
+          {/* SVGキャンバス */}
+          <div className="lg:col-span-3">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              {room.width > 0 && room.height > 0 ? (
+                <div>
+                  <div className="mb-3 flex items-center gap-4 pb-3 border-b border-slate-200">
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-green-400"></div>
+                      <span className="text-sm text-slate-600">空席</span>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className="w-4 h-4 rounded-full bg-red-400"></div>
+                      <span className="text-sm text-slate-600">着席中</span>
+                    </div>
+                  </div>
+                  <svg
+                    width={Math.min(room.width, 500)}
+                    height={Math.min(room.height, 400)}
+                    className="border border-slate-300 rounded-lg bg-slate-50"
+                    viewBox={`0 0 ${room.width} ${room.height}`}
+                  >
+                    {seats.map((seat) => (
+                      <g
+                        key={seat.id}
+                        transform={`translate(${seat.x}, ${seat.y})`}
+                        onClick={() => handleSeatClick(seat)}
+                        className="cursor-pointer"
+                      >
+                        <circle
+                          r="12"
+                          fill={seat.occupied ? '#f87171' : '#4ade80'}
+                          stroke="#333"
+                          strokeWidth="1"
+                        />
+                        <text
+                          x="16"
+                          y="4"
+                          fontSize="10"
+                          fill="#000"
+                          style={{ pointerEvents: 'none' }}
+                        >
+                          {seat.label}
+                        </text>
+                        {seat.occupied && (
+                          <text
+                            x="16"
+                            y="14"
+                            fontSize="8"
+                            fill="#666"
+                            style={{ pointerEvents: 'none' }}
+                          >
+                            {seat.occupant_name}
+                          </text>
+                        )}
+                      </g>
+                    ))}
+                  </svg>
+                </div>
+              ) : (
+                <div className="text-slate-500 py-12 text-center">
+                  上面図の寸法が設定されていません
+                </div>
+              )}
+            </div>
+          </div>
 
+          {/* 座席リスト */}
+          <div className="lg:col-span-1">
+            <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">座席一覧</h2>
+              <div className="space-y-2 max-h-96 overflow-y-auto">
+                {seats.map((s) => (
+                  <div key={s.id}
+                    onClick={() => handleSeatClick(s)}
+                    className="p-2 rounded cursor-pointer transition-colors
+                             hover:bg-slate-100 border-l-4"
+                    style={{ borderColor: s.occupied ? '#f87171' : '#4ade80' }}>
+                    <div className="text-sm font-medium text-slate-800">{s.label}</div>
+                    <div className="text-xs text-slate-500">({s.x}, {s.y})</div>
+                    {s.occupied && (
+                      <div className="text-xs text-red-600 font-medium mt-1">{s.occupant_name}</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* チェックインモーダル */}
       {selectedSeat && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 1000
-          }}
-          onClick={() => setSelectedSeat(null)}
-        >
-          <div
-            style={{
-              backgroundColor: '#fff',
-              padding: '24px',
-              borderRadius: '8px',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
-              maxWidth: '400px',
-              width: '100%'
-            }}
-            onClick={(e) => e.stopPropagation()}
-          >
-            <h2>Check in to {selectedSeat.label}</h2>
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setSelectedSeat(null)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-1">
+              {selectedSeat.label} にチェックイン
+            </h2>
+            <p className="text-sm text-slate-500 mb-4">お名前を入力してください</p>
             <input
               type="text"
-              placeholder="Your name"
+              placeholder="名前"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleCheckIn()}
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginBottom: '16px',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-                boxSizing: 'border-box'
-              }}
+              className="w-full px-3 py-2 border border-slate-300 rounded-lg mb-4
+                       focus:outline-none focus:ring-2 focus:ring-cyan-400"
               autoFocus
             />
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <div className="flex gap-3">
               <button
                 onClick={handleCheckIn}
-                style={{
-                  flex: 1,
-                  padding: '8px 12px',
-                  backgroundColor: '#4ade80',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Check In
+                className="flex-1 py-2 bg-green-500 text-white font-medium rounded-lg
+                         hover:bg-green-600 transition-colors">
+                チェックイン
               </button>
               <button
                 onClick={() => setSelectedSeat(null)}
-                style={{
-                  flex: 1,
-                  padding: '8px 12px',
-                  backgroundColor: '#e5e7eb',
-                  color: '#333',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer'
-                }}
-              >
-                Cancel
+                className="flex-1 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg
+                         hover:bg-slate-300 transition-colors">
+                キャンセル
               </button>
             </div>
           </div>

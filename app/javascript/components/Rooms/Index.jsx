@@ -21,153 +21,125 @@ export default function RoomsIndex({ rooms, errors }) {
   }
 
   return (
-    <div style={{ padding: '16px' }}>
-      <h1>Rooms</h1>
-
-      {rooms.length > 0 ? (
-        <div>
-          <h2>Available Rooms</h2>
-          <ul>
-            {rooms.map((room) => (
-              <li key={room.id} style={{ marginBottom: '8px' }}>
-                <a href={`/rooms/${room.id}`} style={{ textDecoration: 'none', color: '#0066cc' }}>
-                  {room.name}
-                </a>
-                {' '}
-                <span style={{ color: '#666' }}>
-                  ({room.width} x {room.height})
-                </span>
-                {' '}
-                <a href={`/editor?room_id=${room.id}`} style={{ fontSize: '0.9em', color: '#666' }}>
-                  [Edit]
-                </a>
-              </li>
-            ))}
-          </ul>
+    <div className="min-h-screen bg-slate-50">
+      <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-8">
+          <h1 className="text-3xl font-bold text-slate-800 mb-2">上面図管理</h1>
+          <p className="text-slate-500">座席配置を作成・管理します</p>
         </div>
-      ) : (
-        <p>No rooms yet. Create one to get started.</p>
-      )}
 
-      <hr style={{ margin: '24px 0', borderTop: '1px solid #ccc' }} />
-
-      <button
-        onClick={() => setShowForm(!showForm)}
-        style={{
-          padding: '8px 16px',
-          backgroundColor: '#06b6d4',
-          color: '#042f2e',
-          border: 'none',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          fontSize: '1em'
-        }}
-      >
-        {showForm ? 'Hide Form' : 'Create New Room'}
-      </button>
-
-      {showForm && (
-        <form
-          onSubmit={handleSubmit}
-          style={{
-            marginTop: '16px',
-            padding: '12px',
-            border: '1px solid #e5e7eb',
-            borderRadius: '6px',
-            maxWidth: '480px',
-            backgroundColor: '#f9fafb'
-          }}
-        >
-          <h2>New Room</h2>
-
-          {errors && errors.length > 0 && (
-            <div style={{ marginBottom: '12px', padding: '8px', backgroundColor: '#fee2e2', borderRadius: '4px', color: '#991b1b' }}>
-              {errors.map((error, i) => (
-                <div key={i}>{error}</div>
+        {rooms.length > 0 ? (
+          <div className="mb-8">
+            <h2 className="text-xl font-semibold text-slate-700 mb-4">利用可能な上面図</h2>
+            <div className="space-y-2">
+              {rooms.map((room) => (
+                <div key={room.id}
+                  className="bg-white border border-slate-200 rounded-lg px-4 py-3
+                           flex items-center justify-between
+                           shadow-sm hover:shadow-md transition-shadow">
+                  <div className="flex-1">
+                    <a href={`/rooms/${room.id}`}
+                       className="font-medium text-slate-800 hover:text-cyan-600 transition-colors">
+                      {room.name}
+                    </a>
+                    <span className="text-sm text-slate-400 ml-3">
+                      {room.width} × {room.height}
+                    </span>
+                  </div>
+                  <a href={`/editor?room_id=${room.id}`}
+                     className="text-xs text-slate-500 hover:text-cyan-600 px-3 py-1
+                              border border-slate-300 rounded hover:border-cyan-400 transition-colors">
+                    レイアウト編集
+                  </a>
+                </div>
               ))}
             </div>
-          )}
-
-          <div style={{ marginBottom: '8px' }}>
-            <label htmlFor="name">
-              Room Name <span style={{ color: '#dc2626' }}>*</span>
-            </label>
-            <br />
-            <input
-              id="name"
-              type="text"
-              value={data.name}
-              onChange={(e) => setData('name', e.target.value)}
-              required
-              style={{
-                width: '100%',
-                padding: '8px',
-                marginTop: '4px',
-                border: '1px solid #cbd5e1',
-                borderRadius: '4px',
-                boxSizing: 'border-box'
-              }}
-            />
           </div>
-
-          <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="width">Width</label>
-              <br />
-              <input
-                id="width"
-                type="number"
-                value={data.width}
-                onChange={(e) => setData('width', parseInt(e.target.value))}
-                required
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  marginTop: '4px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
-            <div style={{ flex: 1 }}>
-              <label htmlFor="height">Height</label>
-              <br />
-              <input
-                id="height"
-                type="number"
-                value={data.height}
-                onChange={(e) => setData('height', parseInt(e.target.value))}
-                required
-                style={{
-                  width: '100%',
-                  padding: '8px',
-                  marginTop: '4px',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '4px',
-                  boxSizing: 'border-box'
-                }}
-              />
-            </div>
+        ) : (
+          <div className="bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 text-blue-700 mb-8">
+            上面図がまだ作成されていません。作成から始めましょう。
           </div>
+        )}
 
+        <div className="border-t border-slate-200 pt-8">
           <button
-            type="submit"
-            disabled={processing}
-            style={{
-              backgroundColor: '#06b6d4',
-              color: '#042f2e',
-              border: 'none',
-              padding: '8px 12px',
-              borderRadius: '6px',
-              cursor: processing ? 'not-allowed' : 'pointer',
-              opacity: processing ? 0.6 : 1
-            }}
-          >
-            {processing ? 'Creating...' : 'Create'}
+            onClick={() => setShowForm(!showForm)}
+            className="px-4 py-2 bg-cyan-500 text-white font-medium rounded-lg
+                     hover:bg-cyan-600 transition-colors">
+            {showForm ? 'キャンセル' : '新規上面図を作成'}
           </button>
-        </form>
-      )}
+
+          {showForm && (
+            <form onSubmit={handleSubmit}
+              className="mt-6 bg-white border border-slate-200 rounded-lg p-6 max-w-md">
+              <h2 className="text-lg font-semibold text-slate-800 mb-4">新規上面図</h2>
+
+              {errors && errors.length > 0 && (
+                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                  {errors.map((error, i) => (
+                    <div key={i} className="text-sm text-red-700">{error}</div>
+                  ))}
+                </div>
+              )}
+
+              <div className="mb-4">
+                <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
+                  上面図の名前 <span className="text-red-500">*</span>
+                </label>
+                <input
+                  id="name"
+                  type="text"
+                  value={data.name}
+                  onChange={(e) => setData('name', e.target.value)}
+                  required
+                  className="w-full px-3 py-2 border border-slate-300 rounded-lg
+                           focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  placeholder="例：カフェ、会議室"
+                />
+              </div>
+
+              <div className="mb-6 grid grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="width" className="block text-sm font-medium text-slate-700 mb-1">
+                    幅 (px)
+                  </label>
+                  <input
+                    id="width"
+                    type="number"
+                    value={data.width}
+                    onChange={(e) => setData('width', parseInt(e.target.value))}
+                    required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg
+                             focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                </div>
+                <div>
+                  <label htmlFor="height" className="block text-sm font-medium text-slate-700 mb-1">
+                    高さ (px)
+                  </label>
+                  <input
+                    id="height"
+                    type="number"
+                    value={data.height}
+                    onChange={(e) => setData('height', parseInt(e.target.value))}
+                    required
+                    className="w-full px-3 py-2 border border-slate-300 rounded-lg
+                             focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                  />
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={processing}
+                className="w-full py-2 bg-cyan-500 text-white font-medium rounded-lg
+                         hover:bg-cyan-600 transition-colors disabled:opacity-50">
+                {processing ? '作成中...' : '作成'}
+              </button>
+            </form>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
