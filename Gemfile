@@ -36,6 +36,9 @@ gem "pundit"
 # Background Jobs
 gem "sidekiq"
 
+# Rate limiting
+gem "rack-attack"
+
 # AWS SDK
 gem "aws-sdk-s3"
 

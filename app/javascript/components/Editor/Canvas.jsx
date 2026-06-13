@@ -154,11 +154,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
               ref={svgRef}
               width={currentRoom.width}
               height={currentRoom.height}
-              className="border border-slate-300 rounded-lg bg-slate-50 w-full max-w-2xl"
-              style={{
-                cursor: dragging ? 'grabbing' : isCreating ? 'wait' : 'crosshair',
-                userSelect: 'none'
-              }}
+              className={`border border-slate-300 rounded-lg bg-slate-50 w-full max-w-2xl select-none ${
+                dragging ? 'cursor-grabbing' : isCreating ? 'cursor-wait' : 'cursor-crosshair'
+              }`}
               onClick={handleCanvasClick}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
@@ -169,7 +167,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
                   key={seat.id}
                   transform={`translate(${seat.x}, ${seat.y})`}
                   onMouseDown={(e) => handleSeatMouseDown(e, seat)}
-                  style={{ cursor: isCreating ? 'wait' : 'grab' }}
+                  className={isCreating ? 'cursor-wait' : 'cursor-grab'}
                 >
                   <circle r="12" fill="#4ade80" stroke="#065f46" strokeWidth="2" />
                   <text
@@ -177,7 +175,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
                     y="4"
                     fontSize="12"
                     fill="#000"
-                    style={{ pointerEvents: 'none' }}
+                    className="pointer-events-none"
                   >
                     {seat.label}
                   </text>

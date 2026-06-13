@@ -162,7 +162,7 @@ export default function RoomsShow({ room, seats: initialSeats }) {
                           y="4"
                           fontSize="10"
                           fill="#000"
-                          style={{ pointerEvents: 'none' }}
+                          className="pointer-events-none"
                         >
                           {seat.label}
                         </text>
@@ -172,7 +172,7 @@ export default function RoomsShow({ room, seats: initialSeats }) {
                             y="14"
                             fontSize="8"
                             fill="#666"
-                            style={{ pointerEvents: 'none' }}
+                            className="pointer-events-none"
                           >
                             {seat.occupant_name}
                           </text>
@@ -197,9 +197,10 @@ export default function RoomsShow({ room, seats: initialSeats }) {
                 {seats.map((s) => (
                   <div key={s.id}
                     onClick={() => handleSeatClick(s)}
-                    className="p-2 rounded cursor-pointer transition-colors
-                             hover:bg-slate-100 border-l-4"
-                    style={{ borderColor: s.occupied ? '#f87171' : '#4ade80' }}>
+                    className={`p-2 rounded cursor-pointer transition-colors
+                             hover:bg-slate-100 border-l-4 ${
+                      s.occupied ? 'border-red-400' : 'border-green-400'
+                    }`}>
                     <div className="text-sm font-medium text-slate-800">{s.label}</div>
                     <div className="text-xs text-slate-500">({s.x}, {s.y})</div>
                     {s.occupied && (
