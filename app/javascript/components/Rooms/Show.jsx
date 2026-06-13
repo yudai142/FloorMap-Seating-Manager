@@ -192,6 +192,11 @@ export default function RoomsShow({ room, seats: initialSeats }) {
           {/* 座席リスト */}
           <div className="lg:col-span-1 order-1 lg:order-2">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+              <div className="flex gap-2 mb-4">
+                <a href={`/rooms/${room.id}/seats/export_csv`} download className="px-3 py-2 bg-blue-500 text-white text-sm rounded font-medium hover:bg-blue-600 transition-colors">
+                  📥 座席情報をダウンロード
+                </a>
+              </div>
               <h2 className="text-lg font-semibold text-slate-800 mb-4">座席一覧</h2>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {seats.map((s) => (

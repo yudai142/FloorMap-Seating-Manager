@@ -60,4 +60,21 @@ class RoomsController < ApplicationController
   def room_params
     params.require(:room).permit(:name, :width, :height)
   end
+
+  def export_csv
+    authorize Room
+    @rooms = Room.all
+
+    require 'csv'
+    csv_data = CSV.generate(headers: true, encoding: 'UTF-8') do |csv|
+      csv << ['ルーム名', '幅 (px)', '高さ (px)', '座席数', '着席数', '空席数', '登録日時']
+      @rooms.each do |room|
+        occupied_count = room.seats.where(occupied: true).count
+        empty_count = room.seats.where(occupied: false).count
+        csv << [room.name, room.width, room.height, room.seats.count, occupied_count, empty_count, room.created_at]
+      end
+    end
+
+    send_data csv_data, filename: "rooms_#{Date.today}.csv", type: 'text/csv; charset=utf-8'
+  end
 end

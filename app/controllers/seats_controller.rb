@@ -78,4 +78,19 @@ class SeatsController < ApplicationController
   def check_in_params
     params.permit(:occupant_name)
   end
+
+  def export_csv
+    @room = Room.find(params[:room_id])
+    seats = @room.seats
+
+    require 'csv'
+    csv_data = CSV.generate(headers: true) do |csv|
+      csv << ['ラベル', 'X', 'Y', '着席中', '氏名', '登録日時']
+      seats.each do |s|
+        csv << [s.label, s.x, s.y, s.occupied ? '着席' : '空席', s.occupant_name, s.created_at]
+      end
+    end
+
+    send_data csv_data, filename: "seats_#{@room.name}_#{Date.today}.csv", type: 'text/csv'
+  end
 end
