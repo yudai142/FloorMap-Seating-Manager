@@ -9,6 +9,9 @@ Rails.application.routes.draw do
   # get "manifest" => "rails/pwa#manifest", as: :pwa_manifest
   # get "service-worker" => "rails/pwa#service_worker", as: :pwa_service_worker
 
+  # Authentication
+  devise_for :users
+
   # Defines the root path route ("/")
   # root "posts#index"
   resources :rooms, only: %i[index show create] do
@@ -17,6 +20,13 @@ Rails.application.routes.draw do
 
   root to: 'rooms#index'
   get 'editor', to: 'editors#show'
+
+  resources :backups, only: %i[index create] do
+    member do
+      post :restore
+      get  :download
+    end
+  end
 
   resources :seats, only: [] do
     member do
@@ -34,4 +44,6 @@ Rails.application.routes.draw do
       patch :mark_as_read
     end
   end
+
+  resources :notification_preferences, only: %i[index update]
 end

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react'
 import { usePage } from '@inertiajs/react'
+import { subscribeToUserNotifications } from '../../channels/user_channel'
 
 export default function NotificationBell() {
   const [unreadCount, setUnreadCount] = useState(0)
@@ -13,9 +14,20 @@ export default function NotificationBell() {
     // 初期状態を読み込む
     fetchNotifications()
 
-    // WebSocket 接続
-    subscribeToNotifications()
+    // WebSocket 接続（ユーザー個別チャンネル）
+    const subscription = subscribeToUserNotifications(auth.user.id, handleNewNotification)
+
+    return () => {
+      if (subscription) {
+        subscription.unsubscribe()
+      }
+    }
   }, [auth.user])
+
+  const handleNewNotification = (notification) => {
+    setNotifications([notification, ...notifications])
+    setUnreadCount((prev) => prev + 1)
+  }
 
   const fetchNotifications = async () => {
     try {
@@ -28,44 +40,6 @@ export default function NotificationBell() {
     }
   }
 
-  const subscribeToNotifications = () => {
-    if (!window.consumer) return
-
-    const subscription = window.consumer.subscriptions.create(
-      { channel: 'NotificationChannel' },
-      {
-        connected() {
-          console.log('Connected to NotificationChannel')
-        },
-        disconnected() {
-          console.log('Disconnected from NotificationChannel')
-        },
-        received(data) {
-          if (data.type === 'notification') {
-            // 新しい通知を追加
-            setNotifications([data.notification, ...notifications])
-            setUnreadCount((prev) => prev + 1)
-          } else if (data.type === 'notification_read') {
-            // 通知を既読にする
-            setNotifications(
-              notifications.map((n) =>
-                n.id === data.notification.id ? data.notification : n
-              )
-            )
-            setUnreadCount((prev) => Math.max(0, prev - 1))
-          } else if (data.type === 'all_notifications_read') {
-            // すべての通知を既読にする
-            setNotifications(
-              notifications.map((n) => ({ ...n, read_at: new Date().toISOString() }))
-            )
-            setUnreadCount(0)
-          }
-        }
-      }
-    )
-
-    return () => subscription.unsubscribe()
-  }
 
   const handleMarkAsRead = async (notificationId) => {
     try {

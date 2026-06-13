@@ -1,4 +1,6 @@
 class SeatsController < ApplicationController
+  before_action :authenticate_user!
+
   def create
     @room = Room.find(params[:room_id])
     @seat = @room.seats.build(seat_params)
@@ -20,15 +22,15 @@ class SeatsController < ApplicationController
 
   def check_in
     @seat = Seat.find(params[:id])
-    if @seat.update(occupied: true, occupant_name: params[:occupant_name])
+    if @seat.update(occupied: true, occupant_name: check_in_params[:occupant_name])
       # ブロードキャスト座席更新
       ActionCable.server.broadcast("room_#{@seat.room_id}", {
         type: 'seat_update',
         seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
       })
 
-      # 全ユーザーに通知を送信
-      broadcast_notification_to_room(
+      # 全ユーザーに通知を非同期で送信
+      BroadcastNotificationJob.perform_async(
         @seat.room_id,
         'check_in',
         "#{params[:occupant_name]}さんがチェックインしました",
@@ -52,8 +54,8 @@ class SeatsController < ApplicationController
         seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
       })
 
-      # 全ユーザーに通知を送信
-      broadcast_notification_to_room(
+      # 全ユーザーに通知を非同期で送信
+      BroadcastNotificationJob.perform_async(
         @seat.room_id,
         'check_out',
         "#{occupant_name}さんがチェックアウトしました",
@@ -73,22 +75,7 @@ class SeatsController < ApplicationController
     params.require(:seat).permit(:label, :x, :y, :occupied, :occupant_name)
   end
 
-  def broadcast_notification_to_room(room_id, type, title, message, data)
-    room = Room.find(room_id)
-    # すべてのユーザーに通知を送信
-    User.find_each do |user|
-      notification = Notification.create_notification(
-        user,
-        type,
-        title,
-        message,
-        data
-      )
-      # WebSocket で通知をブロードキャスト
-      ActionCable.server.broadcast("user_#{user.id}", {
-        type: 'notification',
-        notification: notification.as_json
-      })
-    end
+  def check_in_params
+    params.permit(:occupant_name)
   end
 end
