@@ -1,10 +1,13 @@
 import React, { useState, useRef } from 'react'
 import { router } from '@inertiajs/react'
+import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 
 export default function Canvas({ rooms, room, initialSeats }) {
   const [currentRoom, setCurrentRoom] = useState(room)
   const [seats, setSeats] = useState(initialSeats || [])
   const [dragging, setDragging] = useState(null)
+  const [alert, setAlert] = useState(null)
+  const [isCreating, setIsCreating] = useState(false)
   const svgRef = useRef(null)
 
   const getCsrfToken = () => {
@@ -13,18 +16,18 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const handleRoomChange = (e) => {
     const newRoomId = e.target.value
-    const newRoom = rooms.find(r => r.id === parseInt(newRoomId))
     router.visit(`/editor?room_id=${newRoomId}`, { preserveState: false })
   }
 
   const handleCanvasClick = async (e) => {
-    if (dragging || !currentRoom) return
+    if (dragging || !currentRoom || isCreating) return
 
     const rect = svgRef.current.getBoundingClientRect()
     const x = Math.round(e.clientX - rect.left)
     const y = Math.round(e.clientY - rect.top)
     const newLabel = `S${seats.length + 1}`
 
+    setIsCreating(true)
     try {
       const response = await fetch(`/rooms/${currentRoom.id}/seats`, {
         method: 'POST',
@@ -35,17 +38,26 @@ export default function Canvas({ rooms, room, initialSeats }) {
         body: JSON.stringify({ seat: { label: newLabel, x, y } })
       })
 
-      if (response.ok) {
-        const newSeat = await response.json()
-        setSeats([...seats, newSeat])
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.errors?.[0] || '座席の追加に失敗しました')
       }
+
+      const newSeat = await response.json()
+      setSeats([...seats, newSeat])
+      setAlert({ type: 'success', message: `${newLabel} を追加しました` })
+      setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      console.error('Failed to create seat:', err)
+      setAlert({ type: 'error', message: err.message })
+      console.error('Seat creation error:', err)
+    } finally {
+      setIsCreating(false)
     }
   }
 
   const handleSeatMouseDown = (e, seat) => {
     e.stopPropagation()
+    if (isCreating) return
     const rect = svgRef.current.getBoundingClientRect()
     const offsetX = e.clientX - rect.left - seat.x
     const offsetY = e.clientY - rect.top - seat.y
@@ -70,7 +82,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     const seat = seats.find(s => s.id === dragging.id)
     if (seat) {
       try {
-        await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
+        const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
           method: 'PATCH',
           headers: {
             'Content-Type': 'application/json',
@@ -78,8 +90,13 @@ export default function Canvas({ rooms, room, initialSeats }) {
           },
           body: JSON.stringify({ seat: { x: seat.x, y: seat.y } })
         })
+
+        if (!response.ok) {
+          throw new Error('座席の位置を保存できませんでした')
+        }
       } catch (err) {
-        console.error('Failed to update seat position:', err)
+        setAlert({ type: 'error', message: err.message })
+        console.error('Seat update error:', err)
       }
     }
 
@@ -97,6 +114,20 @@ export default function Canvas({ rooms, room, initialSeats }) {
           <p className="text-slate-500 text-sm mt-1">座席をクリックして追加、ドラッグして移動</p>
         </div>
 
+        {alert && (
+          alert.type === 'error' ? (
+            <ErrorAlert
+              message={alert.message}
+              onDismiss={() => setAlert(null)}
+            />
+          ) : (
+            <SuccessAlert
+              message={alert.message}
+              onDismiss={() => setAlert(null)}
+            />
+          )
+        )}
+
         <div className="mb-6">
           <label htmlFor="room-select" className="block text-sm font-medium text-slate-700 mb-2">
             編集する上面図
@@ -105,8 +136,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
             id="room-select"
             value={currentRoom?.id || ''}
             onChange={handleRoomChange}
+            disabled={isCreating || dragging}
             className="px-3 py-2 border border-slate-300 rounded-lg
-                     focus:outline-none focus:ring-2 focus:ring-cyan-400">
+                     focus:outline-none focus:ring-2 focus:ring-cyan-400
+                     disabled:bg-slate-100 disabled:text-slate-500">
             {rooms.map(r => (
               <option key={r.id} value={r.id}>
                 {r.name} ({r.width}×{r.height})
@@ -123,7 +156,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
               height={currentRoom.height}
               className="border border-slate-300 rounded-lg bg-slate-50 w-full max-w-2xl"
               style={{
-                cursor: dragging ? 'grabbing' : 'crosshair',
+                cursor: dragging ? 'grabbing' : isCreating ? 'wait' : 'crosshair',
                 userSelect: 'none'
               }}
               onClick={handleCanvasClick}
@@ -136,7 +169,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
                   key={seat.id}
                   transform={`translate(${seat.x}, ${seat.y})`}
                   onMouseDown={(e) => handleSeatMouseDown(e, seat)}
-                  style={{ cursor: 'grab' }}
+                  style={{ cursor: isCreating ? 'wait' : 'grab' }}
                 >
                   <circle r="12" fill="#4ade80" stroke="#065f46" strokeWidth="2" />
                   <text
@@ -152,7 +185,12 @@ export default function Canvas({ rooms, room, initialSeats }) {
               ))}
             </svg>
             <p className="text-sm text-slate-500 mt-4">
-              {seats.length} 個の座席 • ドラッグで移動、マウスアップで自動保存
+              {isCreating && <span className="text-cyan-600 font-medium">● 追加中...</span>}
+              {!isCreating && (
+                <>
+                  {seats.length} 個の座席 • ドラッグで移動、マウスアップで自動保存
+                </>
+              )}
             </p>
           </div>
         ) : (

@@ -1,9 +1,10 @@
 import React, { useState } from 'react'
 import { useForm } from '@inertiajs/react'
-import { router } from '@inertiajs/react'
+import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 
-export default function RoomsIndex({ rooms, errors }) {
+export default function RoomsIndex({ rooms, errors: serverErrors }) {
   const [showForm, setShowForm] = useState(false)
+  const [alert, setAlert] = useState(null)
   const { data, setData, post, processing } = useForm({
     name: '',
     width: 800,
@@ -12,10 +13,22 @@ export default function RoomsIndex({ rooms, errors }) {
 
   const handleSubmit = (e) => {
     e.preventDefault()
+
+    if (!data.name.trim()) {
+      setAlert({ type: 'error', message: '上面図の名前を入力してください' })
+      return
+    }
+
     post('/rooms', {
       onSuccess: () => {
+        setAlert({ type: 'success', message: '上面図を作成しました' })
         setData({ name: '', width: 800, height: 600 })
         setShowForm(false)
+        setTimeout(() => setAlert(null), 3000)
+      },
+      onError: (errors) => {
+        const errorMessage = errors.name?.[0] || '作成に失敗しました'
+        setAlert({ type: 'error', message: errorMessage })
       }
     })
   }
@@ -27,6 +40,20 @@ export default function RoomsIndex({ rooms, errors }) {
           <h1 className="text-3xl font-bold text-slate-800 mb-2">上面図管理</h1>
           <p className="text-slate-500">座席配置を作成・管理します</p>
         </div>
+
+        {alert && (
+          alert.type === 'error' ? (
+            <ErrorAlert
+              message={alert.message}
+              onDismiss={() => setAlert(null)}
+            />
+          ) : (
+            <SuccessAlert
+              message={alert.message}
+              onDismiss={() => setAlert(null)}
+            />
+          )
+        )}
 
         {rooms.length > 0 ? (
           <div className="mb-8">
@@ -64,8 +91,9 @@ export default function RoomsIndex({ rooms, errors }) {
         <div className="border-t border-slate-200 pt-8">
           <button
             onClick={() => setShowForm(!showForm)}
+            disabled={processing}
             className="px-4 py-2 bg-cyan-500 text-white font-medium rounded-lg
-                     hover:bg-cyan-600 transition-colors">
+                     hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
             {showForm ? 'キャンセル' : '新規上面図を作成'}
           </button>
 
@@ -73,14 +101,6 @@ export default function RoomsIndex({ rooms, errors }) {
             <form onSubmit={handleSubmit}
               className="mt-6 bg-white border border-slate-200 rounded-lg p-6 max-w-md">
               <h2 className="text-lg font-semibold text-slate-800 mb-4">新規上面図</h2>
-
-              {errors && errors.length > 0 && (
-                <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
-                  {errors.map((error, i) => (
-                    <div key={i} className="text-sm text-red-700">{error}</div>
-                  ))}
-                </div>
-              )}
 
               <div className="mb-4">
                 <label htmlFor="name" className="block text-sm font-medium text-slate-700 mb-1">
@@ -92,8 +112,10 @@ export default function RoomsIndex({ rooms, errors }) {
                   value={data.name}
                   onChange={(e) => setData('name', e.target.value)}
                   required
+                  disabled={processing}
                   className="w-full px-3 py-2 border border-slate-300 rounded-lg
-                           focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                           focus:outline-none focus:ring-2 focus:ring-cyan-400
+                           disabled:bg-slate-100 disabled:text-slate-500"
                   placeholder="例：カフェ、会議室"
                 />
               </div>
@@ -109,8 +131,10 @@ export default function RoomsIndex({ rooms, errors }) {
                     value={data.width}
                     onChange={(e) => setData('width', parseInt(e.target.value))}
                     required
+                    disabled={processing}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg
-                             focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                             focus:outline-none focus:ring-2 focus:ring-cyan-400
+                             disabled:bg-slate-100 disabled:text-slate-500"
                   />
                 </div>
                 <div>
@@ -123,8 +147,10 @@ export default function RoomsIndex({ rooms, errors }) {
                     value={data.height}
                     onChange={(e) => setData('height', parseInt(e.target.value))}
                     required
+                    disabled={processing}
                     className="w-full px-3 py-2 border border-slate-300 rounded-lg
-                             focus:outline-none focus:ring-2 focus:ring-cyan-400"
+                             focus:outline-none focus:ring-2 focus:ring-cyan-400
+                             disabled:bg-slate-100 disabled:text-slate-500"
                   />
                 </div>
               </div>
@@ -133,7 +159,11 @@ export default function RoomsIndex({ rooms, errors }) {
                 type="submit"
                 disabled={processing}
                 className="w-full py-2 bg-cyan-500 text-white font-medium rounded-lg
-                         hover:bg-cyan-600 transition-colors disabled:opacity-50">
+                         hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed
+                         flex items-center justify-center gap-2">
+                {processing && (
+                  <span className="inline-block animate-spin">⟳</span>
+                )}
                 {processing ? '作成中...' : '作成'}
               </button>
             </form>
