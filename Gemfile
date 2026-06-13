@@ -33,6 +33,15 @@ gem "devise-i18n"
 # Authorization
 gem "pundit"
 
+# Background Jobs
+gem "sidekiq"
+
+# AWS SDK
+gem "aws-sdk-s3"
+
+# Backup utilities
+gem "pgbackups"
+
 # Reduces boot times through caching; required in config/boot.rb
 gem "bootsnap", require: false
 
