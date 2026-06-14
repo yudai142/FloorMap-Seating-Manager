@@ -26,6 +26,11 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const handleCanvasClick = async (e) => {
     if (dragging || !currentRoom || isCreating) return
 
+    // 直線または四角形の描画が進行中なら、クリックイベントをスキップ
+    if (drawingStart && (tool === 'line' || tool === 'rectangle')) {
+      return
+    }
+
     const rect = svgRef.current.getBoundingClientRect()
     const x = Math.round(e.clientX - rect.left)
     const y = Math.round(e.clientY - rect.top)
