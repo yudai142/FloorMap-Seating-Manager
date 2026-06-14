@@ -30,11 +30,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
   useEffect(() => {
     if (currentRoom) {
       setRoomSizeInput({ width: currentRoom.width, height: currentRoom.height })
-      if (currentRoom.shapes_data && Array.isArray(currentRoom.shapes_data)) {
-        setShapes(currentRoom.shapes_data)
-        setHistory([{ seats, shapes: currentRoom.shapes_data }])
-        setHistoryIndex(0)
-      }
+      const loadedShapes = currentRoom.shapes_data && Array.isArray(currentRoom.shapes_data) ? currentRoom.shapes_data : []
+      setShapes(loadedShapes)
+      setHistory([{ seats, shapes: loadedShapes }])
+      setHistoryIndex(0)
     }
   }, [currentRoom?.id])
 
