@@ -24,7 +24,7 @@ class RoomsController < ApplicationController
   def show
     authorize @room
     render inertia: 'Rooms/Show', props: {
-      room: @room.as_json(only: %i[id name width height]),
+      room: @room.as_json(only: %i[id name width height], methods: :shapes_data),
       seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name])
     }
   end
@@ -78,7 +78,7 @@ class RoomsController < ApplicationController
   end
 
   def room_params
-    params.require(:room).permit(:name, :width, :height, :floor_plan_image)
+    params.require(:room).permit(:name, :width, :height, :floor_plan_image, shapes_data: [])
   end
 
   def export_csv

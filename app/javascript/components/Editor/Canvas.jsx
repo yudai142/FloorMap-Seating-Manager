@@ -30,8 +30,13 @@ export default function Canvas({ rooms, room, initialSeats }) {
   useEffect(() => {
     if (currentRoom) {
       setRoomSizeInput({ width: currentRoom.width, height: currentRoom.height })
+      if (currentRoom.shapes_data && Array.isArray(currentRoom.shapes_data)) {
+        setShapes(currentRoom.shapes_data)
+        setHistory([{ seats, shapes: currentRoom.shapes_data }])
+        setHistoryIndex(0)
+      }
     }
-  }, [currentRoom])
+  }, [currentRoom?.id])
 
   useEffect(() => {
     if (!isResizing) return
@@ -159,6 +164,35 @@ export default function Canvas({ rooms, room, initialSeats }) {
       setSeats(nextSeats)
       setShapes(nextShapes)
       setHistoryIndex(newIndex)
+    }
+  }
+
+  const handleSaveShapes = async () => {
+    if (!currentRoom) {
+      setAlert({ type: 'error', message: 'ルームが選択されていません' })
+      return
+    }
+
+    try {
+      const payload = { room: { shapes_data: shapes } }
+      const response = await fetch(`/rooms/${currentRoom.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify(payload)
+      })
+
+      if (!response.ok) {
+        throw new Error('図形の保存に失敗しました')
+      }
+
+      setAlert({ type: 'success', message: '図形を保存しました' })
+      setTimeout(() => setAlert(null), 2000)
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message })
+      console.error('Shape save error:', err)
     }
   }
 
@@ -849,6 +883,11 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 title="やり直す (Ctrl+Y)"
                 className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 ↷ やり直す
+              </button>
+              <button
+                onClick={handleSaveShapes}
+                className="px-3 py-1 rounded font-medium bg-green-500 text-white hover:bg-green-600 text-sm">
+                💾 保存
               </button>
             </div>
 
