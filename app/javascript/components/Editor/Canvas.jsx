@@ -49,6 +49,15 @@ export default function Canvas({ rooms, room, initialSeats }) {
       }
 
       setRoomSizeInput({ width: newWidth, height: newHeight })
+
+      // オートスクロール：マウスが画面下部に近づいたらスクロール
+      const scrollThreshold = 100
+      const distanceFromBottom = window.innerHeight - e.clientY
+
+      if (distanceFromBottom < scrollThreshold) {
+        const scrollSpeed = Math.max(5, scrollThreshold - distanceFromBottom)
+        window.scrollBy(0, scrollSpeed)
+      }
     }
 
     const handleMouseUp = async () => {
