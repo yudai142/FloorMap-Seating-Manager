@@ -1,21 +1,19 @@
+require 'shellwords'
+
 class BackupJob
   include Sidekiq::Job
 
   sidekiq_options retry: 3
 
   def perform(backup_id = nil)
-    # 手動バックアップの場合
     backup = backup_id ? Backup.find(backup_id) : create_backup
-
     return unless backup
 
     backup.update(status: :in_progress, started_at: Time.current)
 
-    # バックアップファイルを生成
     backup_file = generate_backup
 
     if backup_file && File.exist?(backup_file)
-      # S3 にアップロード
       if backup.upload_to_s3(backup_file)
         Rails.logger.info("Backup completed: #{backup.name}")
         notify_success(backup)
@@ -53,8 +51,14 @@ class BackupJob
     password = db_config['password']
     database = db_config['database']
 
-    # pg_dump コマンド実行
-    cmd = "PGPASSWORD='#{password}' pg_dump -h #{host} -U #{user} #{database} | gzip > #{backup_file}"
+    # Escape all parameters to prevent command injection
+    escaped_password = Shellwords.escape(password)
+    escaped_host = Shellwords.escape(host)
+    escaped_user = Shellwords.escape(user)
+    escaped_database = Shellwords.escape(database)
+    escaped_backup_file = Shellwords.escape(backup_file)
+
+    cmd = "PGPASSWORD=#{escaped_password} pg_dump -h #{escaped_host} -U #{escaped_user} #{escaped_database} | gzip > #{escaped_backup_file}"
 
     if system(cmd)
       backup_file
@@ -65,27 +69,23 @@ class BackupJob
   end
 
   def notify_success(backup)
-    # 管理者に通知
     User.admin.each do |admin|
       Notification.create_notification(
-        admin,
-        'backup_completed',
-        'バックアップが完了しました',
-        "バックアップ: #{backup.name} (#{backup.size_mb} MB)",
-        { backup_id: backup.id }
+        user: admin,
+        notification_type: :backup_completed,
+        title: 'バックアップ完了',
+        message: "バックアップ「#{backup.name}」が正常に完了しました"
       )
     end
   end
 
   def notify_failure(backup)
-    # 管理者にエラー通知
     User.admin.each do |admin|
       Notification.create_notification(
-        admin,
-        'backup_failed',
-        'バックアップが失敗しました',
-        "バックアップ: #{backup.name} - #{backup.error_message}",
-        { backup_id: backup.id }
+        user: admin,
+        notification_type: :backup_failed,
+        title: 'バックアップ失敗',
+        message: "バックアップ「#{backup.name}」が失敗しました: #{backup.error_message}"
       )
     end
   end
