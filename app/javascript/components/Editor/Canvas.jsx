@@ -187,6 +187,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
         throw new Error('図形の保存に失敗しました')
       }
 
+      const responseData = await response.json()
+      setCurrentRoom(responseData)
       setAlert({ type: 'success', message: '図形を保存しました' })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
