@@ -21,6 +21,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStart, setResizeStart] = useState(null)
   const [zoom, setZoom] = useState(1)
+  const [history, setHistory] = useState([])
+  const [historyIndex, setHistoryIndex] = useState(-1)
   const svgRef = useRef(null)
   const svgContainerRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -131,6 +133,33 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const handleZoomReset = () => {
     setZoom(1)
+  }
+
+  const saveToHistory = (newSeats, newShapes) => {
+    const newHistory = history.slice(0, historyIndex + 1)
+    newHistory.push({ seats: newSeats, shapes: newShapes })
+    setHistory(newHistory)
+    setHistoryIndex(newHistory.length - 1)
+  }
+
+  const handleUndo = () => {
+    if (historyIndex > 0) {
+      const newIndex = historyIndex - 1
+      const { seats: previousSeats, shapes: previousShapes } = history[newIndex]
+      setSeats(previousSeats)
+      setShapes(previousShapes)
+      setHistoryIndex(newIndex)
+    }
+  }
+
+  const handleRedo = () => {
+    if (historyIndex < history.length - 1) {
+      const newIndex = historyIndex + 1
+      const { seats: nextSeats, shapes: nextShapes } = history[newIndex]
+      setSeats(nextSeats)
+      setShapes(nextShapes)
+      setHistoryIndex(newIndex)
+    }
   }
 
   const handleRoomSizeUpdate = async () => {
@@ -366,7 +395,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       }
 
       const newSeat = await response.json()
-      setSeats([...seats, newSeat])
+      const newSeats = [...seats, newSeat]
+      setSeats(newSeats)
+      saveToHistory(newSeats, shapes)
       setAlert({ type: 'success', message: `${newLabel} を追加しました` })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
@@ -391,7 +422,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       x2: x,
       y2: y
     }
-    setShapes([...shapes, newLine])
+    const newShapes = [...shapes, newLine]
+    setShapes(newShapes)
+    saveToHistory(seats, newShapes)
     setDrawingStart(null)
     setPreview(null)
     setSkipNextClick(true)
@@ -415,7 +448,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       cy: drawingStart.y,
       r: radius
     }
-    setShapes([...shapes, newCircle])
+    const newShapes = [...shapes, newCircle]
+    setShapes(newShapes)
+    saveToHistory(seats, newShapes)
     setDrawingStart(null)
     setPreview(null)
     setSkipNextClick(true)
@@ -435,7 +470,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       x2: x,
       y2: y
     }
-    setShapes([...shapes, newArrow])
+    const newShapes = [...shapes, newArrow]
+    setShapes(newShapes)
+    saveToHistory(seats, newShapes)
     setDrawingStart(null)
     setPreview(null)
     setSkipNextClick(true)
@@ -454,7 +491,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       y: textInput.y,
       text: textInput.text
     }
-    setShapes([...shapes, newText])
+    const newShapes = [...shapes, newText]
+    setShapes(newShapes)
+    saveToHistory(seats, newShapes)
     setTextInput(null)
   }
 
@@ -490,7 +529,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
       width: Math.abs(x - drawingStart.x),
       height: Math.abs(y - drawingStart.y)
     }
-    setShapes([...shapes, newRect])
+    const newShapes = [...shapes, newRect]
+    setShapes(newShapes)
+    saveToHistory(seats, newShapes)
     setDrawingStart(null)
     setPreview(null)
     setSkipNextClick(true)
@@ -794,6 +835,23 @@ export default function Canvas({ rooms, room, initialSeats }) {
           </div>
 
           <div className="flex gap-6 flex-wrap items-center">
+            <div className="flex gap-2">
+              <button
+                onClick={handleUndo}
+                disabled={historyIndex <= 0}
+                title="元に戻す (Ctrl+Z)"
+                className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                ↶ 戻す
+              </button>
+              <button
+                onClick={handleRedo}
+                disabled={historyIndex >= history.length - 1}
+                title="やり直す (Ctrl+Y)"
+                className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
+                ↷ やり直す
+              </button>
+            </div>
+
             <div className="flex gap-3">
               <label className="text-sm font-medium text-slate-700">描画方法:</label>
             <button
