@@ -18,13 +18,62 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [textInput, setTextInput] = useState(null)
   const [roomSizeInput, setRoomSizeInput] = useState({ width: 0, height: 0 })
   const [isUpdatingRoom, setIsUpdatingRoom] = useState(false)
+  const [isResizing, setIsResizing] = useState(false)
+  const [resizeStart, setResizeStart] = useState(null)
   const svgRef = useRef(null)
+  const svgContainerRef = useRef(null)
 
   useEffect(() => {
     if (currentRoom) {
       setRoomSizeInput({ width: currentRoom.width, height: currentRoom.height })
     }
   }, [currentRoom])
+
+  useEffect(() => {
+    if (!isResizing) return
+
+    const handleMouseMove = (e) => {
+      if (!resizeStart || !svgContainerRef.current) return
+
+      const container = svgContainerRef.current.getBoundingClientRect()
+      const deltaX = e.clientX - resizeStart.x
+      const deltaY = e.clientY - resizeStart.y
+
+      const newWidth = Math.max(100, resizeStart.width + deltaX)
+      const newHeight = Math.max(100, resizeStart.height + deltaY)
+
+      setRoomSizeInput({ width: newWidth, height: newHeight })
+    }
+
+    const handleMouseUp = async () => {
+      setIsResizing(false)
+      setResizeStart(null)
+
+      if (currentRoom && (roomSizeInput.width !== currentRoom.width || roomSizeInput.height !== currentRoom.height)) {
+        await handleRoomSizeUpdate()
+      }
+    }
+
+    document.addEventListener('mousemove', handleMouseMove)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [isResizing, resizeStart, roomSizeInput, currentRoom])
+
+  const handleResizeStart = (e) => {
+    e.preventDefault()
+    e.stopPropagation()
+    setIsResizing(true)
+    setResizeStart({
+      x: e.clientX,
+      y: e.clientY,
+      width: roomSizeInput.width,
+      height: roomSizeInput.height
+    })
+  }
 
   const getCsrfToken = () => {
     return document.querySelector('meta[name="csrf-token"]').content
@@ -715,19 +764,24 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
         {currentRoom ? (
           <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
-            <svg
-              ref={svgRef}
-              width={currentRoom.width}
-              height={currentRoom.height}
-              className={`border border-slate-300 rounded-lg bg-slate-50 w-full max-w-2xl select-none ${
-                dragging ? 'cursor-grabbing' : isCreating ? 'cursor-wait' : 'cursor-crosshair'
-              }`}
-              onClick={handleCanvasClick}
-              onMouseDown={handleCanvasMouseDown}
-              onMouseMove={handleMouseMove}
-              onMouseUp={handleMouseUp}
-              onMouseLeave={handleMouseUp}
+            <div
+              ref={svgContainerRef}
+              className="relative inline-block"
+              style={{ width: `${Math.round(roomSizeInput.width)}px`, height: `${Math.round(roomSizeInput.height)}px` }}
             >
+              <svg
+                ref={svgRef}
+                width={roomSizeInput.width}
+                height={roomSizeInput.height}
+                className={`border border-slate-300 rounded-lg bg-slate-50 block select-none ${
+                  dragging ? 'cursor-grabbing' : isResizing ? 'cursor-nwse-resize' : isCreating ? 'cursor-wait' : 'cursor-crosshair'
+                }`}
+                onClick={handleCanvasClick}
+                onMouseDown={handleCanvasMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onMouseLeave={handleMouseUp}
+              >
               {shapes.map((shape) => {
                 if (shape.type === 'line') {
                   return (
@@ -907,6 +961,19 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 </g>
               ))}
             </svg>
+
+              {/* リサイズハンドル */}
+              <div
+                onMouseDown={handleResizeStart}
+                className="absolute bottom-0 right-0 w-4 h-4 bg-cyan-500 cursor-nwse-resize rounded-tl"
+                style={{
+                  transform: 'translate(2px, 2px)',
+                  zIndex: 10
+                }}
+                title="ドラッグしてキャンバスをリサイズ"
+              />
+            </div>
+
             <div className="mt-4 flex flex-col gap-3">
               <p className="text-sm text-slate-500">
                 {isCreating && <span className="text-cyan-600 font-medium">● 追加中...</span>}
