@@ -13,6 +13,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [drawingStart, setDrawingStart] = useState(null)
   const [preview, setPreview] = useState(null)
   const [skipNextClick, setSkipNextClick] = useState(false)
+  const [drawMode, setDrawMode] = useState('click')
   const svgRef = useRef(null)
 
   const getCsrfToken = () => {
@@ -26,6 +27,11 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const handleCanvasClick = async (e) => {
     if (dragging || !currentRoom || isCreating) return
+
+    // ドラッグモードではクリックイベントをスキップ
+    if (drawMode === 'drag' && (tool === 'line' || tool === 'rectangle')) {
+      return
+    }
 
     // 前の描画が完了したばかりならスキップ
     if (skipNextClick) {
@@ -45,6 +51,21 @@ export default function Canvas({ rooms, room, initialSeats }) {
       handleRectStart(x, y)
     } else if (tool === 'delete') {
       handleDeleteShape(x, y)
+    }
+  }
+
+  const handleCanvasMouseDown = (e) => {
+    if (!currentRoom || isCreating || drawMode !== 'drag') return
+    if (tool !== 'line' && tool !== 'rectangle') return
+
+    const rect = svgRef.current.getBoundingClientRect()
+    const x = Math.round(e.clientX - rect.left)
+    const y = Math.round(e.clientY - rect.top)
+
+    if (tool === 'line') {
+      handleLineStart(x, y)
+    } else if (tool === 'rectangle') {
+      handleRectStart(x, y)
     }
   }
 
@@ -324,43 +345,69 @@ export default function Canvas({ rooms, room, initialSeats }) {
           </select>
         </div>
 
-        <div className="mb-6 flex gap-3">
-          <button
-            onClick={() => setTool('seat')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              tool === 'seat'
-                ? 'bg-cyan-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}>
-            座席追加
-          </button>
-          <button
-            onClick={() => setTool('line')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              tool === 'line'
-                ? 'bg-cyan-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}>
-            直線
-          </button>
-          <button
-            onClick={() => setTool('rectangle')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              tool === 'rectangle'
-                ? 'bg-cyan-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}>
-            四角形
-          </button>
-          <button
-            onClick={() => setTool('delete')}
-            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-              tool === 'delete'
-                ? 'bg-red-500 text-white'
-                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-            }`}>
-            削除
-          </button>
+        <div className="mb-6">
+          <div className="mb-3 flex gap-3">
+            <button
+              onClick={() => setTool('seat')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'seat'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              座席追加
+            </button>
+            <button
+              onClick={() => setTool('line')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'line'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              直線
+            </button>
+            <button
+              onClick={() => setTool('rectangle')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'rectangle'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              四角形
+            </button>
+            <button
+              onClick={() => setTool('delete')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'delete'
+                  ? 'bg-red-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              削除
+            </button>
+          </div>
+
+          {(tool === 'line' || tool === 'rectangle') && (
+            <div className="flex gap-3">
+              <label className="text-sm font-medium text-slate-700">描画方法:</label>
+              <button
+                onClick={() => setDrawMode('click')}
+                className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
+                  drawMode === 'click'
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}>
+                2点選択
+              </button>
+              <button
+                onClick={() => setDrawMode('drag')}
+                className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
+                  drawMode === 'drag'
+                    ? 'bg-indigo-500 text-white'
+                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+                }`}>
+                ドラッグ
+              </button>
+            </div>
+          )}
         </div>
 
         {currentRoom ? (
@@ -373,6 +420,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 dragging ? 'cursor-grabbing' : isCreating ? 'cursor-wait' : 'cursor-crosshair'
               }`}
               onClick={handleCanvasClick}
+              onMouseDown={handleCanvasMouseDown}
               onMouseMove={handleMouseMove}
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
