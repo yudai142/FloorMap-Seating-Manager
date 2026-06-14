@@ -111,6 +111,10 @@ group :test do
   gem "selenium-webdriver"
 end
 
+# Two-Factor Authentication (needed in all environments)
+gem "devise-two-factor"
+gem "rqrcode"
+
 group :production do
   # Error tracking
   gem "sentry-ruby"
@@ -118,9 +122,5 @@ group :production do
 
   # Caching
   gem "redis"
-
-  # Two-Factor Authentication
-  gem "devise-two-factor"
-  gem "rqrcode"
 end
 gem "lograge"
