@@ -9,9 +9,11 @@ export default defineConfig({
   server: {
     host: '0.0.0.0',
     port: 3036,
+    middlewareMode: false,
     hmr: {
-      host: 'localhost',
-      port: 3036
+      host: process.env.VITE_HMR_HOST || 'localhost',
+      port: process.env.VITE_HMR_PORT || 3036,
+      protocol: process.env.VITE_HMR_PROTOCOL || 'http'
     }
   },
 
