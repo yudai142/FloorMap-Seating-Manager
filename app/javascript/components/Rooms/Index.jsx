@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { useForm } from '@inertiajs/react'
+import { useForm, router } from '@inertiajs/react'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 import Pagination from '../ui/Pagination'
 
@@ -25,7 +25,8 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
         setAlert({ type: 'success', message: '上面図を作成しました' })
         setData({ name: '', width: 800, height: 600 })
         setShowForm(false)
-        setTimeout(() => setAlert(null), 3000)
+        // ページをリロードして、新しく作成された上面図を表示
+        setTimeout(() => router.visit('/'), 1500)
       },
       onError: (errors) => {
         const errorMessage = errors.name?.[0] || '作成に失敗しました'
