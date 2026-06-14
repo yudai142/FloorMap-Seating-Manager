@@ -1,7 +1,7 @@
 class Notification < ApplicationRecord
   belongs_to :user
 
-  enum notification_type: { check_in: 'check_in', check_out: 'check_out', seat_update: 'seat_update' }
+  enum :notification_type, { check_in: 'check_in', check_out: 'check_out', seat_update: 'seat_update' }
 
   scope :unread, -> { where(read_at: nil) }
   scope :recent, -> { order(created_at: :desc) }
