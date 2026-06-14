@@ -793,8 +793,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
             </button>
           </div>
 
-          <div className="flex gap-3">
-            <label className="text-sm font-medium text-slate-700">描画方法:</label>
+          <div className="flex gap-6 flex-wrap items-center">
+            <div className="flex gap-3">
+              <label className="text-sm font-medium text-slate-700">描画方法:</label>
             <button
               onClick={() => setDrawMode('click')}
               className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
@@ -813,9 +814,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
               }`}>
               ドラッグ
             </button>
-          </div>
+            </div>
 
-          <div className="flex gap-3 items-center">
+            <div className="flex gap-3 items-center">
             <label className="text-sm font-medium text-slate-700">ズーム:</label>
             <button
               onClick={handleZoomOut}
@@ -835,6 +836,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
               className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm">
               リセット
             </button>
+            </div>
           </div>
         </div>
 
