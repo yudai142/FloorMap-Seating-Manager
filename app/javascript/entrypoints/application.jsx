@@ -5,10 +5,19 @@ import { createRoot } from 'react-dom/client'
 createInertiaApp({
   resolve: name => {
     const pages = import.meta.glob('../components/**/*.jsx', { eager: true })
-    return pages[`../components/${name}.jsx`]
+    const page = pages[`../components/${name}.jsx`]
+    if (!page) {
+      console.error(`Component not found: ${name}`)
+      console.log('Available components:', Object.keys(pages))
+    }
+    return page
   },
   setup({ el, App, props }) {
-    createRoot(el).render(<App {...props} />)
+    if (el && App) {
+      createRoot(el).render(<App {...props} />)
+    } else {
+      console.error('Missing el or App in Inertia setup', { el, App })
+    }
   }
 })
 
