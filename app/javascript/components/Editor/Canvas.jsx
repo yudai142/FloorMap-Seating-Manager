@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react'
+import React, { useState, useRef, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 
@@ -16,10 +16,48 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [drawMode, setDrawMode] = useState('click')
   const [polygonPoints, setPolygonPoints] = useState([])
   const [textInput, setTextInput] = useState(null)
+  const [roomSizeInput, setRoomSizeInput] = useState({ width: 0, height: 0 })
+  const [isUpdatingRoom, setIsUpdatingRoom] = useState(false)
   const svgRef = useRef(null)
+
+  useEffect(() => {
+    if (currentRoom) {
+      setRoomSizeInput({ width: currentRoom.width, height: currentRoom.height })
+    }
+  }, [currentRoom])
 
   const getCsrfToken = () => {
     return document.querySelector('meta[name="csrf-token"]').content
+  }
+
+  const handleRoomSizeUpdate = async () => {
+    if (!currentRoom || !roomSizeInput.width || !roomSizeInput.height) return
+
+    setIsUpdatingRoom(true)
+    try {
+      const response = await fetch(`/rooms/${currentRoom.id}`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ room: { width: roomSizeInput.width, height: roomSizeInput.height } })
+      })
+
+      if (!response.ok) {
+        throw new Error('上面図のサイズ更新に失敗しました')
+      }
+
+      const updatedRoom = await response.json()
+      setCurrentRoom(updatedRoom)
+      setAlert({ type: 'success', message: 'サイズを更新しました' })
+      setTimeout(() => setAlert(null), 2000)
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message })
+      console.error('Room size update error:', err)
+    } finally {
+      setIsUpdatingRoom(false)
+    }
   }
 
   const handleRoomChange = (e) => {
@@ -498,6 +536,55 @@ export default function Canvas({ rooms, room, initialSeats }) {
             ))}
           </select>
         </div>
+
+        {currentRoom && (
+          <div className="mb-6 p-4 bg-slate-100 rounded-lg">
+            <h3 className="text-sm font-medium text-slate-700 mb-3">上面図のサイズ</h3>
+            <div className="grid grid-cols-2 gap-4 mb-3">
+              <div>
+                <label htmlFor="width" className="block text-xs font-medium text-slate-600 mb-1">
+                  幅 (px)
+                </label>
+                <input
+                  id="width"
+                  type="number"
+                  min="100"
+                  max="5000"
+                  value={roomSizeInput.width}
+                  onChange={(e) => setRoomSizeInput({ ...roomSizeInput, width: parseInt(e.target.value) || 0 })}
+                  disabled={isUpdatingRoom}
+                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded
+                           focus:outline-none focus:ring-2 focus:ring-cyan-400
+                           disabled:bg-slate-50 disabled:text-slate-500"
+                />
+              </div>
+              <div>
+                <label htmlFor="height" className="block text-xs font-medium text-slate-600 mb-1">
+                  高さ (px)
+                </label>
+                <input
+                  id="height"
+                  type="number"
+                  min="100"
+                  max="5000"
+                  value={roomSizeInput.height}
+                  onChange={(e) => setRoomSizeInput({ ...roomSizeInput, height: parseInt(e.target.value) || 0 })}
+                  disabled={isUpdatingRoom}
+                  className="w-full px-2 py-1 text-sm border border-slate-300 rounded
+                           focus:outline-none focus:ring-2 focus:ring-cyan-400
+                           disabled:bg-slate-50 disabled:text-slate-500"
+                />
+              </div>
+            </div>
+            <button
+              onClick={handleRoomSizeUpdate}
+              disabled={isUpdatingRoom || roomSizeInput.width === currentRoom.width && roomSizeInput.height === currentRoom.height}
+              className="px-3 py-1 text-sm bg-cyan-500 text-white rounded font-medium
+                       hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+              {isUpdatingRoom ? '更新中...' : 'サイズ更新'}
+            </button>
+          </div>
+        )}
 
         <div className="mb-6">
           <div className="mb-3 flex gap-3">

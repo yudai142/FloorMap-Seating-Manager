@@ -55,6 +55,16 @@ class RoomsController < ApplicationController
     end
   end
 
+  def update
+    @room = Room.find(params[:id])
+    authorize @room
+    if @room.update(room_params)
+      render json: @room.as_json(only: %i[id name width height]), status: :ok
+    else
+      render json: { errors: @room.errors.messages }, status: :unprocessable_entity
+    end
+  end
+
   private
 
   def set_room

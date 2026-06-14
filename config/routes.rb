@@ -3,7 +3,7 @@ Rails.application.routes.draw do
 
   devise_for :users
 
-  resources :rooms, only: %i[index show create] do
+  resources :rooms, only: %i[index show create update] do
     resources :seats, only: %i[create update destroy] do
       collection { get :export_csv }
     end
@@ -56,7 +56,7 @@ Rails.application.routes.draw do
 
   namespace :api do
     namespace :v1 do
-      resources :rooms, only: %i[index show create] do
+      resources :rooms, only: %i[index show create update] do
         resources :seats, only: %i[create update] do
           collection { get :export_csv }
         end
