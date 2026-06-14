@@ -36,7 +36,68 @@ export default function Canvas({ rooms, room, initialSeats }) {
       handleLineStart(x, y)
     } else if (tool === 'rectangle') {
       handleRectStart(x, y)
+    } else if (tool === 'delete') {
+      handleDeleteShape(x, y)
     }
+  }
+
+  const handleDeleteShape = (x, y) => {
+    for (let i = shapes.length - 1; i >= 0; i--) {
+      const shape = shapes[i]
+      const tolerance = 10
+
+      if (shape.type === 'line') {
+        const distance = distanceToLine(x, y, shape.x1, shape.y1, shape.x2, shape.y2)
+        if (distance < tolerance) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          setAlert({ type: 'success', message: '直線を削除しました' })
+          setTimeout(() => setAlert(null), 2000)
+          return
+        }
+      } else if (shape.type === 'rectangle') {
+        if (
+          x >= shape.x && x <= shape.x + shape.width &&
+          y >= shape.y && y <= shape.y + shape.height
+        ) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          setAlert({ type: 'success', message: '四角形を削除しました' })
+          setTimeout(() => setAlert(null), 2000)
+          return
+        }
+      }
+    }
+    setAlert({ type: 'error', message: '図形をクリックしてください' })
+    setTimeout(() => setAlert(null), 2000)
+  }
+
+  const distanceToLine = (px, py, x1, y1, x2, y2) => {
+    const A = px - x1
+    const B = py - y1
+    const C = x2 - x1
+    const D = y2 - y1
+
+    const dot = A * C + B * D
+    const lenSq = C * C + D * D
+    let param = -1
+
+    if (lenSq !== 0) param = dot / lenSq
+
+    let xx, yy
+
+    if (param < 0) {
+      xx = x1
+      yy = y1
+    } else if (param > 1) {
+      xx = x2
+      yy = y2
+    } else {
+      xx = x1 + param * C
+      yy = y1 + param * D
+    }
+
+    const dx = px - xx
+    const dy = py - yy
+    return Math.sqrt(dx * dx + dy * dy)
   }
 
   const handleAddSeat = async (x, y) => {
@@ -225,7 +286,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
             id="room-select"
             value={currentRoom?.id || ''}
             onChange={handleRoomChange}
-            disabled={isCreating || dragging || drawingStart}
+            disabled={isCreating || dragging || drawingStart || tool === 'delete'}
             className="px-3 py-2 border border-slate-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-cyan-400
                      disabled:bg-slate-100 disabled:text-slate-500">
@@ -264,6 +325,15 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
             }`}>
             四角形
+          </button>
+          <button
+            onClick={() => setTool('delete')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              tool === 'delete'
+                ? 'bg-red-500 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}>
+            削除
           </button>
         </div>
 
