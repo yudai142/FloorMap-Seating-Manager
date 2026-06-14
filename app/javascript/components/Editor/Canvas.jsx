@@ -611,8 +611,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
   }
 
   return (
-    <div className="min-h-screen bg-slate-50">
-      <div className="max-w-6xl mx-auto px-4 py-8">
+    <div className="min-h-screen bg-slate-50 flex flex-col">
+      <div className="max-w-6xl mx-auto px-4 py-8 w-full">
         <div className="mb-8">
           <a href="/" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium mb-2 inline-block">
             ← 戻る
@@ -803,8 +803,11 @@ export default function Canvas({ rooms, room, initialSeats }) {
           </div>
         </div>
 
-        {currentRoom ? (
-          <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
+      </div>
+
+      {currentRoom ? (
+        <div className="flex-1 overflow-auto bg-white border-t border-slate-200">
+          <div className="p-6 inline-block">
             <div
               ref={svgContainerRef}
               className="relative inline-block"
@@ -1095,12 +1098,14 @@ export default function Canvas({ rooms, room, initialSeats }) {
               )}
             </div>
           </div>
+        </div>
         ) : (
-          <div className="bg-amber-50 border border-amber-200 rounded-lg px-6 py-8 text-center">
-            <p className="text-amber-700">上面図を選択してください</p>
+          <div className="flex-1 bg-amber-50 border-t border-slate-200 flex items-center justify-center">
+            <div className="text-center">
+              <p className="text-amber-700">上面図を選択してください</p>
+            </div>
           </div>
         )}
-      </div>
     </div>
   )
 }
