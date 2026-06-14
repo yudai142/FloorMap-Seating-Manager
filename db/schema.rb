@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_14_040000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_14_050000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -57,6 +57,20 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_14_040000) do
     t.index ["backup_type"], name: "index_backups_on_backup_type"
     t.index ["created_at"], name: "index_backups_on_created_at"
     t.index ["status"], name: "index_backups_on_status"
+  end
+
+  create_table "invitations", force: :cascade do |t|
+    t.datetime "accepted_at"
+    t.datetime "created_at", null: false
+    t.string "email", null: false
+    t.datetime "expires_at", null: false
+    t.bigint "invited_by_id"
+    t.integer "role", default: 0
+    t.string "token", null: false
+    t.datetime "updated_at", null: false
+    t.index ["email"], name: "index_invitations_on_email"
+    t.index ["invited_by_id"], name: "index_invitations_on_invited_by_id"
+    t.index ["token"], name: "index_invitations_on_token", unique: true
   end
 
   create_table "notification_preferences", force: :cascade do |t|
@@ -138,6 +152,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_14_040000) do
 
   add_foreign_key "active_storage_attachments", "active_storage_blobs", column: "blob_id"
   add_foreign_key "active_storage_variant_records", "active_storage_blobs", column: "blob_id"
+  add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "notification_preferences", "users"
   add_foreign_key "notifications", "users"
   add_foreign_key "seats", "rooms"

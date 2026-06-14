@@ -78,18 +78,6 @@ group :development, :test do
 
   # Test Coverage Report
   gem "simplecov", require: false
-
-  # Pagination
-  gem "kaminari"
-
-  # Search
-  gem "ransack"
-
-  # Audit Trail
-  gem "paper_trail"
-
-  # Admin Dashboard
-  gem "rails_admin"
 end
 
 group :development do
@@ -110,6 +98,18 @@ group :test do
   gem "capybara"
   gem "selenium-webdriver"
 end
+
+# Pagination
+gem "kaminari"
+
+# Search
+gem "ransack"
+
+# Audit Trail
+gem "paper_trail"
+
+# Admin Dashboard
+gem "rails_admin"
 
 # Two-Factor Authentication (needed in all environments)
 gem "devise-two-factor"

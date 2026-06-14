@@ -35,13 +35,12 @@ RUN bundle config set path '/usr/local/bundle' && \
   bundle config set without '' || true && \
   bundle install --jobs 4 --retry 3
 
-# Install frontend deps
-RUN if [ -f yarn.lock ]; then \
+# Install frontend deps (remove node_modules for ARM64 to rebuild correctly)
+RUN rm -rf node_modules package-lock.json && \
+    if [ -f yarn.lock ]; then \
       yarn install --frozen-lockfile || true; \
-    elif [ -f package-lock.json ]; then \
-      npm ci --silent || true; \
-    else \
-      npm install --silent || true; \
+    elif [ -f package.json ]; then \
+      npm install || true; \
     fi
 
 # Copy application

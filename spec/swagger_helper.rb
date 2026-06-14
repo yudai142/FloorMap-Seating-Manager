@@ -1,7 +1,8 @@
-require 'swagger_helper'
+require 'rails_helper'
+require 'rswag/specs'
 
 RSpec.configure do |config|
-  config.swagger_root = Rails.root.to_s + '/swagger'
+  config.swagger_root = Rails.root.to_s + '/public/api-docs'
 
   config.swagger_docs = {
     'v1/swagger.yaml' => {

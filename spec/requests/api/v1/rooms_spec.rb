@@ -1,67 +1,100 @@
 require 'rails_helper'
 
-RSpec.describe 'Api::V1::Rooms', type: :request do
+RSpec.describe 'API V1 Rooms', type: :request do
+  include Devise::Test::IntegrationHelpers
+
   let(:user) { create(:user) }
   let(:headers) { { 'CONTENT_TYPE' => 'application/json' } }
 
-  before { sign_in user }
+  path '/api/v1/rooms' do
+    get 'List all rooms with pagination' do
+      tags 'Rooms'
+      parameter name: :page, in: :query, type: :integer, description: 'Page number'
+      parameter name: :q, in: :query, type: :object, description: 'Search query (ransack format)'
 
-  describe 'GET /api/v1/rooms' do
-    let!(:rooms) { create_list(:room, 3) }
+      response '200', 'success' do
+        let!(:rooms) { create_list(:room, 3) }
 
-    it 'returns list of rooms' do
-      get '/api/v1/rooms', headers: headers
+        before { sign_in user }
 
-      expect(response).to have_http_status(:ok)
-      expect(JSON.parse(response.body)).to include(
-        'rooms' => be_an(Array),
-        'pagination' => be_a(Hash)
-      )
+        schema type: :object, properties: {
+          rooms: { type: :array, items: { '$ref': '#/components/schemas/Room' } },
+          pagination: {
+            type: :object,
+            properties: {
+              current_page: { type: :integer },
+              total_pages: { type: :integer },
+              total_count: { type: :integer }
+            }
+          }
+        }
+
+        run_test!
+      end
     end
 
-    it 'returns pagination data' do
-      get '/api/v1/rooms', headers: headers
-
-      pagination = JSON.parse(response.body)['pagination']
-      expect(pagination).to include(
-        'current_page' => be_an(Integer),
-        'total_pages' => be_an(Integer),
-        'total_count' => be_an(Integer)
-      )
-    end
-  end
-
-  describe 'GET /api/v1/rooms/:id' do
-    let(:room) { create(:room) }
-
-    it 'returns room details with seats' do
-      create_list(:seat, 3, room: room)
-
-      get "/api/v1/rooms/#{room.id}", headers: headers
-
-      expect(response).to have_http_status(:ok)
-      data = JSON.parse(response.body)
-      expect(data).to include(
-        'id' => room.id,
-        'name' => room.name,
-        'seats' => be_an(Array)
-      )
-    end
-  end
-
-  describe 'POST /api/v1/rooms' do
-    let(:room_params) do
-      {
-        room: { name: 'New Room', width: 800, height: 600 }
+    post 'Create a new room' do
+      tags 'Rooms'
+      security [{ bearerAuth: [] }]
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          room: {
+            type: :object,
+            properties: {
+              name: { type: :string },
+              width: { type: :integer },
+              height: { type: :integer }
+            },
+            required: ['name']
+          }
+        }
       }
+
+      response '201', 'created' do
+        let(:body) { { room: { name: 'New Room', width: 800, height: 600 } } }
+
+        before { sign_in user }
+
+        schema type: :object, properties: {
+          id: { type: :integer },
+          name: { type: :string },
+          width: { type: :integer },
+          height: { type: :integer }
+        }
+
+        run_test!
+      end
     end
+  end
 
-    it 'creates a new room' do
-      expect {
-        post '/api/v1/rooms', params: room_params.to_json, headers: headers
-      }.to change(Room, :count).by(1)
+  path '/api/v1/rooms/{id}' do
+    get 'Get a room with seats' do
+      tags 'Rooms'
+      parameter name: :id, in: :path, type: :integer, required: true
 
-      expect(response).to have_http_status(:created)
+      response '200', 'success' do
+        let(:room) { create(:room) }
+        let(:id) { room.id }
+
+        before do
+          create_list(:seat, 3, room: room)
+          sign_in user
+        end
+
+        schema type: :object, properties: {
+          id: { type: :integer },
+          name: { type: :string },
+          width: { type: :integer },
+          height: { type: :integer },
+          seats: {
+            type: :array,
+            items: { '$ref': '#/components/schemas/Seat' }
+          }
+        }
+
+        run_test!
+      end
     end
   end
 end

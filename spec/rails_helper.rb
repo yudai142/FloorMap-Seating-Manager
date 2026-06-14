@@ -5,6 +5,8 @@ abort('The Rails environment is running in production mode!') if Rails.env.produ
 require 'spec_helper'
 require 'rspec/rails'
 require 'factory_bot_rails'
+require 'capybara/rails'
+require 'selenium-webdriver'
 
 begin
   ActiveRecord::Migration.maintain_test_schema!
@@ -14,8 +16,6 @@ rescue ActiveRecord::PendingMigrationError => e
 end
 
 RSpec.configure do |config|
-  # rspec-rails が正しくロードされていない環境で
-  # `fixture_path=` が未定義だと NoMethodError になるため保護する
   if config.respond_to?(:fixture_path=)
     config.fixture_path = "#{::Rails.root}/spec/fixtures"
   end
@@ -26,4 +26,12 @@ RSpec.configure do |config|
 
   # Factory Bot
   config.include FactoryBot::Syntax::Methods
+
+  # Devise helpers for system tests
+  config.include Devise::Test::IntegrationHelpers, type: :system
+  config.include Devise::Test::IntegrationHelpers, type: :request
+
+  # Capybara driver
+  Capybara.default_driver = :selenium_chrome_headless
+  Capybara.javascript_driver = :selenium_chrome_headless
 end

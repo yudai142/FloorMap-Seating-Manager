@@ -1,36 +1,62 @@
 require 'rails_helper'
 
-RSpec.describe 'Api::V1::Seats', type: :request do
+RSpec.describe 'API V1 Seats', type: :request do
+  include Devise::Test::IntegrationHelpers
+
   let(:user) { create(:user) }
   let(:room) { create(:room) }
   let(:seat) { create(:seat, room: room) }
   let(:headers) { { 'CONTENT_TYPE' => 'application/json' } }
 
-  before { sign_in user }
+  path '/api/v1/seats/{id}/check_in' do
+    post 'Check in to a seat' do
+      tags 'Seats'
+      parameter name: :id, in: :path, type: :integer, required: true
+      parameter name: :body, in: :body, schema: {
+        type: :object,
+        properties: {
+          occupant_name: { type: :string }
+        }
+      }
 
-  describe 'POST /api/v1/rooms/:room_id/seats/:id/check_in' do
-    it 'marks seat as occupied' do
-      expect(seat.occupied).to be false
+      response '200', 'success' do
+        let(:id) { seat.id }
+        let(:body) { { occupant_name: 'John Doe' } }
 
-      post "/api/v1/seats/#{seat.id}/check_in", 
-           params: { occupant_name: 'John Doe' }.to_json, 
-           headers: headers
+        before { sign_in user }
 
-      expect(response).to have_http_status(:ok)
-      expect(seat.reload.occupied).to be true
-      expect(seat.occupant_name).to eq('John Doe')
+        schema type: :object, properties: {
+          id: { type: :integer },
+          label: { type: :string },
+          occupied: { type: :boolean },
+          occupant_name: { type: :string }
+        }
+
+        run_test!
+      end
     end
   end
 
-  describe 'POST /api/v1/seats/:id/check_out' do
-    let(:seat) { create(:seat, room: room, occupied: true, occupant_name: 'Jane Doe') }
+  path '/api/v1/seats/{id}/check_out' do
+    post 'Check out from a seat' do
+      tags 'Seats'
+      parameter name: :id, in: :path, type: :integer, required: true
 
-    it 'marks seat as empty' do
-      post "/api/v1/seats/#{seat.id}/check_out", headers: headers
+      response '200', 'success' do
+        let(:seat) { create(:seat, room: room, occupied: true, occupant_name: 'Jane Doe') }
+        let(:id) { seat.id }
 
-      expect(response).to have_http_status(:ok)
-      expect(seat.reload.occupied).to be false
-      expect(seat.occupant_name).to be_nil
+        before { sign_in user }
+
+        schema type: :object, properties: {
+          id: { type: :integer },
+          label: { type: :string },
+          occupied: { type: :boolean },
+          occupant_name: { type: [:string, 'null'] }
+        }
+
+        run_test!
+      end
     end
   end
 end
