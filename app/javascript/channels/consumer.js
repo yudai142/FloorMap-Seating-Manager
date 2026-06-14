@@ -1,4 +1,4 @@
-import ActionCable from "@rails/actioncable"
+import * as ActionCable from "@rails/actioncable"
 
 const consumer = ActionCable.createConsumer()
 
