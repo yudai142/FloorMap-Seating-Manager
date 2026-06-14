@@ -173,13 +173,41 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setTimeout(() => setAlert(null), 2000)
   }
 
-  const handleSeatMouseDown = (e, seat) => {
+  const handleSeatMouseDown = async (e, seat) => {
     e.stopPropagation()
     if (isCreating) return
+
+    if (tool === 'delete') {
+      await handleDeleteSeat(seat)
+      return
+    }
+
     const rect = svgRef.current.getBoundingClientRect()
     const offsetX = e.clientX - rect.left - seat.x
     const offsetY = e.clientY - rect.top - seat.y
     setDragging({ id: seat.id, offsetX, offsetY })
+  }
+
+  const handleDeleteSeat = async (seat) => {
+    try {
+      const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
+        method: 'DELETE',
+        headers: {
+          'X-CSRF-Token': getCsrfToken()
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error('座席の削除に失敗しました')
+      }
+
+      setSeats(seats.filter(s => s.id !== seat.id))
+      setAlert({ type: 'success', message: `${seat.label} を削除しました` })
+      setTimeout(() => setAlert(null), 2000)
+    } catch (err) {
+      setAlert({ type: 'error', message: err.message })
+      console.error('Seat deletion error:', err)
+    }
   }
 
   const handleMouseMove = (e) => {
@@ -261,7 +289,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
             ← 戻る
           </a>
           <h1 className="text-3xl font-bold text-slate-800">上面図エディタ</h1>
-          <p className="text-slate-500 text-sm mt-1">ツールを選択して、キャンバスをクリック・ドラッグして描画</p>
+          <p className="text-slate-500 text-sm mt-1">ツールを選択して、キャンバスをクリック・ドラッグして描画、削除ツールで不要な要素を削除</p>
         </div>
 
         {alert && (
