@@ -10,7 +10,7 @@ class RoomsController < ApplicationController
     # キャッシュキーに検索パラメータを含める
     cache_key = "rooms_page_#{params[:page]}_#{params[:q].inspect}"
     @rooms = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-      @q.result.order(:created_at).page(params[:page]).per(20)
+      @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
     end
 
     render inertia: 'Rooms/Index', props: {
@@ -42,7 +42,7 @@ class RoomsController < ApplicationController
       redirect_to rooms_path, notice: '上面図を作成しました'
     else
       @q = Room.ransack(params[:q])
-      @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
+      @rooms = @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
 
       render inertia: 'Rooms/Index', props: {
         rooms: @rooms.as_json(only: %i[id name width height]),
@@ -74,7 +74,7 @@ class RoomsController < ApplicationController
 
   def export_csv
     authorize Room
-    @rooms = Room.all
+    @rooms = Room.includes(:seats).all
 
     require 'csv'
     csv_data = CSV.generate(headers: true, encoding: 'UTF-8') do |csv|
