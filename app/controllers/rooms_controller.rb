@@ -5,8 +5,8 @@ class RoomsController < ApplicationController
   def index
     authorize Room
     @q = Room.ransack(params[:q])
-    
-    @rooms = @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
+
+    @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
     render inertia: 'Rooms/Index', props: {
       rooms: @rooms.as_json(only: %i[id name width height]),
@@ -39,7 +39,7 @@ class RoomsController < ApplicationController
     else
       Rails.logger.error("Room save failed: #{@room.errors.messages.inspect}")
       @q = Room.ransack(params[:q])
-      @rooms = @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
+      @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
       render inertia: 'Rooms/Index', props: {
         rooms: @rooms.as_json(only: %i[id name width height]),
