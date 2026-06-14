@@ -35,12 +35,18 @@ export default function Canvas({ rooms, room, initialSeats }) {
     const handleMouseMove = (e) => {
       if (!resizeStart || !svgContainerRef.current) return
 
-      const container = svgContainerRef.current.getBoundingClientRect()
       const deltaX = e.clientX - resizeStart.x
       const deltaY = e.clientY - resizeStart.y
 
-      const newWidth = Math.max(100, resizeStart.width + deltaX)
-      const newHeight = Math.max(100, resizeStart.height + deltaY)
+      let newWidth = resizeStart.width
+      let newHeight = resizeStart.height
+
+      if (resizeStart.direction === 'horizontal' || resizeStart.direction === 'both') {
+        newWidth = Math.max(100, resizeStart.width + deltaX)
+      }
+      if (resizeStart.direction === 'vertical' || resizeStart.direction === 'both') {
+        newHeight = Math.max(100, resizeStart.height + deltaY)
+      }
 
       setRoomSizeInput({ width: newWidth, height: newHeight })
     }
@@ -63,7 +69,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     }
   }, [isResizing, resizeStart, roomSizeInput, currentRoom])
 
-  const handleResizeStart = (e) => {
+  const handleResizeStart = (e, direction) => {
     e.preventDefault()
     e.stopPropagation()
     setIsResizing(true)
@@ -71,7 +77,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
       x: e.clientX,
       y: e.clientY,
       width: roomSizeInput.width,
-      height: roomSizeInput.height
+      height: roomSizeInput.height,
+      direction: direction
     })
   }
 
@@ -962,15 +969,39 @@ export default function Canvas({ rooms, room, initialSeats }) {
               ))}
             </svg>
 
-              {/* リサイズハンドル */}
+              {/* 右エッジ（幅のみ変更） */}
               <div
-                onMouseDown={handleResizeStart}
-                className="absolute bottom-0 right-0 w-4 h-4 bg-cyan-500 cursor-nwse-resize rounded-tl"
+                onMouseDown={(e) => handleResizeStart(e, 'horizontal')}
+                className="absolute top-0 right-0 h-full w-2 cursor-ew-resize hover:bg-cyan-400 bg-cyan-200"
+                style={{
+                  transform: 'translateX(1px)',
+                  zIndex: 10,
+                  opacity: 0.5
+                }}
+                title="ドラッグして幅を変更"
+              />
+
+              {/* 下エッジ（高さのみ変更） */}
+              <div
+                onMouseDown={(e) => handleResizeStart(e, 'vertical')}
+                className="absolute bottom-0 left-0 w-full h-2 cursor-ns-resize hover:bg-cyan-400 bg-cyan-200"
+                style={{
+                  transform: 'translateY(1px)',
+                  zIndex: 10,
+                  opacity: 0.5
+                }}
+                title="ドラッグして高さを変更"
+              />
+
+              {/* 右下角（両方向） */}
+              <div
+                onMouseDown={(e) => handleResizeStart(e, 'both')}
+                className="absolute bottom-0 right-0 w-4 h-4 bg-cyan-500 cursor-nwse-resize"
                 style={{
                   transform: 'translate(2px, 2px)',
-                  zIndex: 10
+                  zIndex: 11
                 }}
-                title="ドラッグしてキャンバスをリサイズ"
+                title="ドラッグして幅と高さを同時に変更"
               />
             </div>
 
