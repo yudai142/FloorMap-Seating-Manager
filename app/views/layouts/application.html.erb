@@ -31,11 +31,9 @@
       <%= stylesheet_link_tag :app %>
     <% end %>
 
-    <%# Vite client and application entry point %>
-    <% if Rails.env.development? %>
-      <script type="module" src="http://localhost:3036/vite-dev/@vite/client"></script>
-      <script type="module" src="http://localhost:3036/vite-dev/app/javascript/entrypoints/application.jsx"></script>
-    <% end %>
+    <%# Vite assets - using built assets %>
+    <link rel="stylesheet" href="/vite-dev/assets/application.DM-U0Qe9.css">
+    <script type="module" src="/vite-dev/assets/entrypoints/application.jsx.DwIg4Uvd.js"></script>
   </head>
 
   <body>
