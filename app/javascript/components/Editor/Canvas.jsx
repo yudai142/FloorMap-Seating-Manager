@@ -54,32 +54,28 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
       setRoomSizeInput({ width: newWidth, height: newHeight })
 
-      // オートスクロール：マウスが画面端に近づいたらスクロール
+      // オートスクロール：マウスが画面端に到達したらスクロール
       if (scrollContainerRef.current) {
-        const scrollThreshold = 80
         let scrollX = 0
         let scrollY = 0
+        const maxScrollSpeed = 20
 
-        // 上方向
-        if (e.clientY < scrollThreshold) {
-          const proximity = scrollThreshold - e.clientY
-          scrollY = -(Math.min(proximity, 20) + 5)
+        // 上方向：画面上端到達またはビューポート外
+        if (e.clientY <= 0) {
+          scrollY = -maxScrollSpeed
         }
-        // 下方向
-        if (window.innerHeight - e.clientY < scrollThreshold) {
-          const proximity = scrollThreshold - (window.innerHeight - e.clientY)
-          scrollY = Math.min(proximity, 20) + 5
+        // 下方向：画面下端到達またはビューポート外
+        else if (e.clientY >= window.innerHeight) {
+          scrollY = maxScrollSpeed
         }
 
-        // 左方向
-        if (e.clientX < scrollThreshold) {
-          const proximity = scrollThreshold - e.clientX
-          scrollX = -(Math.min(proximity, 20) + 5)
+        // 左方向：画面左端到達またはビューポート外
+        if (e.clientX <= 0) {
+          scrollX = -maxScrollSpeed
         }
-        // 右方向
-        if (window.innerWidth - e.clientX < scrollThreshold) {
-          const proximity = scrollThreshold - (window.innerWidth - e.clientX)
-          scrollX = Math.min(proximity, 20) + 5
+        // 右方向：画面右端到達またはビューポート外
+        else if (e.clientX >= window.innerWidth) {
+          scrollX = maxScrollSpeed
         }
 
         if (scrollX !== 0 || scrollY !== 0) {
