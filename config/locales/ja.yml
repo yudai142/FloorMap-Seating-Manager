@@ -1,0 +1,110 @@
+ja:
+  activerecord:
+    models:
+      user: ユーザー
+    attributes:
+      user:
+        email: メールアドレス
+        password: パスワード
+        password_confirmation: パスワード（確認）
+        name: 名前
+        role: 役割
+        created_at: 作成日時
+        updated_at: 更新日時
+    errors:
+      messages:
+        blank: を入力してください
+        invalid: は無効です
+        too_short: は短すぎます
+        too_long: は長すぎます
+        taken: はすでに存在します
+  devise:
+    confirmations:
+      confirmed: メールアドレスが確認されました。
+      send_instructions: メールアドレス確認メールを送信しました。
+      send_paranoid_instructions: メールアドレスが存在する場合は、確認メールを送信しました。
+    failure:
+      already_authenticated: すでにログインしています。
+      inactive: アカウントがまだアクティブ化されていません。
+      invalid: メールアドレスまたはパスワードが無効です。
+      last_attempt: もう一度失敗するとアカウントがロックされます。
+      locked: アカウントがロックされています。
+      not_found_in_database: メールアドレスまたはパスワードが無効です。
+      timeout: セッションがタイムアウトしました。ログインしてください。
+      unauthenticated: ログインが必要です。
+      unconfirmed: メールアドレスを確認してください。
+    mailer:
+      confirmation_instructions:
+        action: メールアドレスを確認
+        greeting: "%{recipient}さん、こんにちは"
+        instruction: 下のリンクをクリックしてメールアドレスを確認してください。
+        subject: メールアドレス確認メール
+      password_change:
+        greeting: "%{recipient}さん、こんにちは"
+        message: パスワードが変更されました。
+        subject: パスワード変更完了のお知らせ
+      reset_password_instructions:
+        action: パスワードを変更
+        greeting: "%{recipient}さん、こんにちは"
+        instruction: パスワードをリセットするには下のリンクをクリックしてください。
+        subject: パスワードリセット手順
+      unlock_instructions:
+        action: アカウントのロック解除
+        greeting: "%{recipient}さん、こんにちは"
+        instruction: アカウントのロック解除するには下のリンクをクリックしてください。
+        message: ログイン失敗が複数回ありました。
+        subject: ロック解除手順
+    omniauth_callbacks:
+      failure: "%{kind}から認証に失敗しました。"
+      success: "%{kind}から認証されました。"
+    passwords:
+      edit:
+        change_my_password: パスワードを変更する
+        change_your_password: パスワードを変更してください
+        confirm_new_password: 新しいパスワード（確認）
+        new_password: 新しいパスワード
+        title: パスワード変更
+      new:
+        forgot_your_password: パスワードをお忘れですか？
+        send_me_reset_password_instructions: パスワードリセット手順を送信する
+        title: パスワード忘却
+    registrations:
+      destroyed: アカウントが削除されました。
+      edit:
+        are_you_sure: 本当にいいですか？
+        cancel_my_account: アカウントを削除
+        currently_waiting_confirmation_for_email: "%{email}の確認待ち"
+        leave_blank_if_you_don_t_want_to_change_it: "（変更しない場合は空白のままにしてください）"
+        title: アカウント編集
+        unhappy: 満足しない
+        update: 更新する
+      new:
+        sign_up: 新規登録
+        title: 新規登録
+      signed_up: アカウント登録が完了しました。
+      signed_up_but_inactive: アカウント登録は完了しましたがアカウントがアクティブ化されていません。
+      signed_up_but_locked: アカウント登録は完了しましたがアカウントがロックされています。
+      signed_up_but_unconfirmed: メールアドレス確認メールを送信しました。
+      update_needs_confirmation: アカウントが更新されました。メールアドレス確認メールを送信しました。
+      updated: アカウントが更新されました。
+      updated_but_not_signed_in: アカウントが更新されました。
+    sessions:
+      already_signed_in: すでにログインしています。
+      new:
+        sign_in: ログイン
+        title: ログイン
+      signed_in: ログインしました。
+      signed_out: ログアウトしました。
+    shared:
+      links:
+        back: 戻る
+        didn_t_receive_confirmation_instructions: メールアドレス確認メールを受け取りませんか？
+        didn_t_receive_unlock_instructions: ロック解除メールを受け取りませんか？
+        forgot_your_password: パスワードをお忘れですか？
+        sign_in: ログイン
+        sign_in_with_provider: "%{provider}でログイン"
+        sign_up: 新規登録
+    unlocks:
+      send_instructions: ロック解除メールを送信しました。
+      send_paranoid_instructions: アカウントが存在する場合は、ロック解除メールを送信しました。
+      unlocked: アカウントのロックが解除されました。
