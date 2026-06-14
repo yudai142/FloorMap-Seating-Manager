@@ -9,38 +9,26 @@
     <%= csrf_meta_tags %>
     <%= csp_meta_tag %>
 
-    <%= yield :head %>
-
-    <%# Enable PWA manifest for installable apps (make sure to enable in config/routes.rb too!) %>
-    <%#= tag.link rel: "manifest", href: pwa_manifest_path(format: :json) %>
-
     <link rel="icon" href="/icon.png" type="image/png">
     <link rel="icon" href="/icon.svg" type="image/svg+xml">
     <link rel="apple-touch-icon" href="/icon.png">
     <link rel="manifest" href="/manifest.json">
 
-    <%# PWA meta tags %>
     <meta name="theme-color" content="#0f172a">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FloorMap">
 
-    <%# Includes all stylesheet files in app/assets/stylesheets %>
-    <%# In development, Vite handles CSS via application.jsx import %>
-    <% unless Rails.env.development? %>
-      <%= stylesheet_link_tag :app %>
-    <% end %>
-
-    <%# Vite assets - using built assets %>
+    <%# Vite assets %>
     <link rel="stylesheet" href="/vite-dev/assets/application.DM-U0Qe9.css">
     <script type="module" src="/vite-dev/assets/entrypoints/application.jsx.DFDgF8We.js"></script>
   </head>
 
   <body>
-    <%= render 'shared/header' %>
-
-    <div id="app">
+    <% if @inertia %>
+      <div id="app" data-page="<%= @inertia.to_json %>"></div>
+    <% else %>
       <%= yield %>
-    </div>
+    <% end %>
   </body>
 </html>
