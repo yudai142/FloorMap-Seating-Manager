@@ -35,8 +35,11 @@ export default function Canvas({ rooms, room, initialSeats }) {
     const handleMouseMove = (e) => {
       if (!resizeStart || !svgContainerRef.current) return
 
-      const deltaX = e.clientX - resizeStart.x
-      const deltaY = e.clientY - resizeStart.y
+      const pageX = e.clientX + window.scrollX
+      const pageY = e.clientY + window.scrollY
+
+      const deltaX = pageX - resizeStart.pageX
+      const deltaY = pageY - resizeStart.pageY
 
       let newWidth = resizeStart.width
       let newHeight = resizeStart.height
@@ -105,8 +108,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
     e.stopPropagation()
     setIsResizing(true)
     setResizeStart({
-      x: e.clientX,
-      y: e.clientY,
+      pageX: e.clientX + window.scrollX,
+      pageY: e.clientY + window.scrollY,
       width: roomSizeInput.width,
       height: roomSizeInput.height,
       direction: direction
