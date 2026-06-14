@@ -69,6 +69,12 @@ class SeatsController < ApplicationController
     end
   end
 
+  def destroy
+    @seat = Seat.find(params[:id])
+    @seat.destroy
+    render json: { id: @seat.id }, status: :ok
+  end
+
   private
 
   def seat_params

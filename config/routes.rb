@@ -4,7 +4,7 @@ Rails.application.routes.draw do
   devise_for :users
 
   resources :rooms, only: %i[index show create] do
-    resources :seats, only: %i[create update] do
+    resources :seats, only: %i[create update destroy] do
       collection { get :export_csv }
     end
     collection { get :export_csv }

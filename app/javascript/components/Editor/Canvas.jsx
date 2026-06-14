@@ -50,8 +50,6 @@ export default function Canvas({ rooms, room, initialSeats }) {
         const distance = distanceToLine(x, y, shape.x1, shape.y1, shape.x2, shape.y2)
         if (distance < tolerance) {
           setShapes(shapes.filter((_, idx) => idx !== i))
-          setAlert({ type: 'success', message: '直線を削除しました' })
-          setTimeout(() => setAlert(null), 2000)
           return
         }
       } else if (shape.type === 'rectangle') {
@@ -60,14 +58,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
           y >= shape.y && y <= shape.y + shape.height
         ) {
           setShapes(shapes.filter((_, idx) => idx !== i))
-          setAlert({ type: 'success', message: '四角形を削除しました' })
-          setTimeout(() => setAlert(null), 2000)
           return
         }
       }
     }
-    setAlert({ type: 'error', message: '図形をクリックしてください' })
-    setTimeout(() => setAlert(null), 2000)
   }
 
   const distanceToLine = (px, py, x1, y1, x2, y2) => {
@@ -148,8 +142,6 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setShapes([...shapes, newLine])
     setDrawingStart(null)
     setPreview(null)
-    setAlert({ type: 'success', message: '直線を追加しました' })
-    setTimeout(() => setAlert(null), 2000)
   }
 
   const handleRectStart = (x, y) => {
@@ -169,8 +161,6 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setShapes([...shapes, newRect])
     setDrawingStart(null)
     setPreview(null)
-    setAlert({ type: 'success', message: '四角形を追加しました' })
-    setTimeout(() => setAlert(null), 2000)
   }
 
   const handleSeatMouseDown = async (e, seat) => {
@@ -202,11 +192,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
       }
 
       setSeats(seats.filter(s => s.id !== seat.id))
-      setAlert({ type: 'success', message: `${seat.label} を削除しました` })
-      setTimeout(() => setAlert(null), 2000)
     } catch (err) {
       setAlert({ type: 'error', message: err.message })
       console.error('Seat deletion error:', err)
+      setTimeout(() => setAlert(null), 2000)
     }
   }
 
