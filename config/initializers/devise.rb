@@ -20,7 +20,6 @@ Devise.setup do |config|
 
   # Timeoutable configuration - session expires after 2 hours of inactivity
   config.timeout_in = 2.hours
-  config.responder = lambda { |controller, heading, body, status| controller.render text: body, status: status }
 
   config.sign_out_via = :delete
 end

@@ -35,3 +35,7 @@ RSpec.configure do |config|
   Capybara.default_driver = :selenium_chrome_headless
   Capybara.javascript_driver = :selenium_chrome_headless
 end
+
+# Allow test hosts
+Rails.application.config.hosts << "www.example.com"
+Rails.application.config.hosts << /127\.0\.0\.1/

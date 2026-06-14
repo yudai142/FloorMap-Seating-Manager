@@ -68,6 +68,12 @@ Rails.application.routes.draw do
     end
   end
   
+  # Rswag API documentation (development/test only)
+  if Rails.env.development? || Rails.env.test?
+    mount Rswag::Ui::Engine => '/api-docs'
+    mount Rswag::Api::Engine => '/api-docs'
+  end
+
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"
 
   require 'sidekiq/web'
