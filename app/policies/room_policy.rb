@@ -12,7 +12,7 @@ class RoomPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present? && user.manager?
+    user.present?
   end
 
   def destroy?
