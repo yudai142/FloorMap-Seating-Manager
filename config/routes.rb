@@ -69,3 +69,11 @@ Rails.application.routes.draw do
   end
   mount RailsAdmin::Engine => "/admin", as: "rails_admin"
 end
+
+# Sidekiq Web UI (admin-only)
+require 'sidekiq/web'
+Sidekiq::Web.use Rack::Auth::Basic do |username, password|
+  username == ENV.fetch('SIDEKIQ_USERNAME', 'admin') &&
+  password == ENV.fetch('SIDEKIQ_PASSWORD', 'changeme')
+end
+mount Sidekiq::Web => '/sidekiq'

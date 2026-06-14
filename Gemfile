@@ -123,3 +123,4 @@ group :production do
   gem "devise-two-factor"
   gem "rqrcode"
 end
+gem "lograge"
