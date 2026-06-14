@@ -14,6 +14,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [preview, setPreview] = useState(null)
   const [skipNextClick, setSkipNextClick] = useState(false)
   const [drawMode, setDrawMode] = useState('click')
+  const [polygonPoints, setPolygonPoints] = useState([])
+  const [textInput, setTextInput] = useState(null)
   const svgRef = useRef(null)
 
   const getCsrfToken = () => {
@@ -29,7 +31,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     if (dragging || !currentRoom || isCreating) return
 
     // ドラッグモードではクリックイベントをスキップ
-    if (drawMode === 'drag' && (tool === 'line' || tool === 'rectangle')) {
+    if (drawMode === 'drag' && (tool === 'line' || tool === 'rectangle' || tool === 'circle' || tool === 'arrow')) {
       return
     }
 
@@ -49,6 +51,14 @@ export default function Canvas({ rooms, room, initialSeats }) {
       handleLineStart(x, y)
     } else if (tool === 'rectangle') {
       handleRectStart(x, y)
+    } else if (tool === 'circle') {
+      handleCircleStart(x, y)
+    } else if (tool === 'arrow') {
+      handleArrowStart(x, y)
+    } else if (tool === 'text') {
+      handleTextStart(x, y)
+    } else if (tool === 'polygon') {
+      handlePolygonStart(x, y)
     } else if (tool === 'delete') {
       handleDeleteShape(x, y)
     }
@@ -56,7 +66,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const handleCanvasMouseDown = (e) => {
     if (!currentRoom || isCreating || drawMode !== 'drag') return
-    if (tool !== 'line' && tool !== 'rectangle') return
+    if (tool !== 'line' && tool !== 'rectangle' && tool !== 'circle' && tool !== 'arrow') return
 
     const rect = svgRef.current.getBoundingClientRect()
     const x = Math.round(e.clientX - rect.left)
@@ -66,6 +76,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
       handleLineStart(x, y)
     } else if (tool === 'rectangle') {
       handleRectStart(x, y)
+    } else if (tool === 'circle') {
+      handleCircleStart(x, y)
+    } else if (tool === 'arrow') {
+      handleArrowStart(x, y)
     }
   }
 
@@ -88,8 +102,49 @@ export default function Canvas({ rooms, room, initialSeats }) {
           setShapes(shapes.filter((_, idx) => idx !== i))
           return
         }
+      } else if (shape.type === 'circle') {
+        const distance = Math.sqrt(Math.pow(x - shape.cx, 2) + Math.pow(y - shape.cy, 2))
+        if (distance <= shape.r + tolerance) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          return
+        }
+      } else if (shape.type === 'arrow') {
+        const distance = distanceToLine(x, y, shape.x1, shape.y1, shape.x2, shape.y2)
+        if (distance < tolerance) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          return
+        }
+      } else if (shape.type === 'text') {
+        const textWidth = shape.text.length * 8
+        const textHeight = 16
+        if (
+          x >= shape.x && x <= shape.x + textWidth &&
+          y >= shape.y - textHeight && y <= shape.y
+        ) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          return
+        }
+      } else if (shape.type === 'polygon') {
+        if (isPointInPolygon(x, y, shape.pointsArray)) {
+          setShapes(shapes.filter((_, idx) => idx !== i))
+          return
+        }
       }
     }
+  }
+
+  const isPointInPolygon = (x, y, points) => {
+    let inside = false
+    for (let i = 0, j = points.length - 1; i < points.length; j = i++) {
+      const xi = points[i].x
+      const yi = points[i].y
+      const xj = points[j].x
+      const yj = points[j].y
+
+      const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi
+      if (intersect) inside = !inside
+    }
+    return inside
   }
 
   const distanceToLine = (px, py, x1, y1, x2, y2) => {
@@ -177,6 +232,85 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setDrawingStart({ x, y })
   }
 
+  const handleCircleStart = (x, y) => {
+    setDrawingStart({ x, y })
+  }
+
+  const handleCircleEnd = (x, y) => {
+    if (!drawingStart) return
+    const radius = Math.sqrt(Math.pow(x - drawingStart.x, 2) + Math.pow(y - drawingStart.y, 2))
+    const newCircle = {
+      id: `circle-${Date.now()}`,
+      type: 'circle',
+      cx: drawingStart.x,
+      cy: drawingStart.y,
+      r: radius
+    }
+    setShapes([...shapes, newCircle])
+    setDrawingStart(null)
+    setPreview(null)
+    setSkipNextClick(true)
+  }
+
+  const handleArrowStart = (x, y) => {
+    setDrawingStart({ x, y })
+  }
+
+  const handleArrowEnd = (x, y) => {
+    if (!drawingStart) return
+    const newArrow = {
+      id: `arrow-${Date.now()}`,
+      type: 'arrow',
+      x1: drawingStart.x,
+      y1: drawingStart.y,
+      x2: x,
+      y2: y
+    }
+    setShapes([...shapes, newArrow])
+    setDrawingStart(null)
+    setPreview(null)
+    setSkipNextClick(true)
+  }
+
+  const handleTextStart = (x, y) => {
+    setTextInput({ x, y, text: '' })
+  }
+
+  const handleTextSubmit = () => {
+    if (!textInput || !textInput.text.trim()) return
+    const newText = {
+      id: `text-${Date.now()}`,
+      type: 'text',
+      x: textInput.x,
+      y: textInput.y,
+      text: textInput.text
+    }
+    setShapes([...shapes, newText])
+    setTextInput(null)
+  }
+
+  const handlePolygonStart = (x, y) => {
+    if (drawMode === 'click') {
+      setPolygonPoints([...polygonPoints, { x, y }])
+    }
+  }
+
+  const handlePolygonComplete = () => {
+    if (polygonPoints.length < 3) {
+      setPolygonPoints([])
+      return
+    }
+    const pointsStr = polygonPoints.map(p => `${p.x},${p.y}`).join(' ')
+    const newPolygon = {
+      id: `polygon-${Date.now()}`,
+      type: 'polygon',
+      points: pointsStr,
+      pointsArray: polygonPoints
+    }
+    setShapes([...shapes, newPolygon])
+    setPolygonPoints([])
+  }
+
   const handleRectEnd = (x, y) => {
     if (!drawingStart) return
     const newRect = {
@@ -260,6 +394,22 @@ export default function Canvas({ rooms, room, initialSeats }) {
           width: Math.abs(x - drawingStart.x),
           height: Math.abs(y - drawingStart.y)
         })
+      } else if (tool === 'circle') {
+        const radius = Math.sqrt(Math.pow(x - drawingStart.x, 2) + Math.pow(y - drawingStart.y, 2))
+        setPreview({
+          type: 'circle',
+          cx: drawingStart.x,
+          cy: drawingStart.y,
+          r: radius
+        })
+      } else if (tool === 'arrow') {
+        setPreview({
+          type: 'arrow',
+          x1: drawingStart.x,
+          y1: drawingStart.y,
+          x2: x,
+          y2: y
+        })
       }
     }
   }
@@ -296,6 +446,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
         handleLineEnd(x, y)
       } else if (tool === 'rectangle') {
         handleRectEnd(x, y)
+      } else if (tool === 'circle') {
+        handleCircleEnd(x, y)
+      } else if (tool === 'arrow') {
+        handleArrowEnd(x, y)
       }
     }
   }
@@ -375,6 +529,42 @@ export default function Canvas({ rooms, room, initialSeats }) {
               四角形
             </button>
             <button
+              onClick={() => setTool('circle')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'circle'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              円
+            </button>
+            <button
+              onClick={() => setTool('arrow')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'arrow'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              矢印
+            </button>
+            <button
+              onClick={() => setTool('text')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'text'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              テキスト
+            </button>
+            <button
+              onClick={() => setTool('polygon')}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'polygon'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              ポリゴン
+            </button>
+            <button
               onClick={() => setTool('delete')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
                 tool === 'delete'
@@ -423,32 +613,93 @@ export default function Canvas({ rooms, room, initialSeats }) {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
-              {shapes.map((shape) => (
-                shape.type === 'line' ? (
-                  <line
-                    key={shape.id}
-                    x1={shape.x1}
-                    y1={shape.y1}
-                    x2={shape.x2}
-                    y2={shape.y2}
-                    stroke="#6366f1"
-                    strokeWidth="2"
-                    pointerEvents="none"
-                  />
-                ) : (
-                  <rect
-                    key={shape.id}
-                    x={shape.x}
-                    y={shape.y}
-                    width={shape.width}
-                    height={shape.height}
-                    fill="none"
-                    stroke="#f97316"
-                    strokeWidth="2"
-                    pointerEvents="none"
-                  />
-                )
-              ))}
+              {shapes.map((shape) => {
+                if (shape.type === 'line') {
+                  return (
+                    <line
+                      key={shape.id}
+                      x1={shape.x1}
+                      y1={shape.y1}
+                      x2={shape.x2}
+                      y2={shape.y2}
+                      stroke="#6366f1"
+                      strokeWidth="2"
+                      pointerEvents="none"
+                    />
+                  )
+                } else if (shape.type === 'rectangle') {
+                  return (
+                    <rect
+                      key={shape.id}
+                      x={shape.x}
+                      y={shape.y}
+                      width={shape.width}
+                      height={shape.height}
+                      fill="none"
+                      stroke="#f97316"
+                      strokeWidth="2"
+                      pointerEvents="none"
+                    />
+                  )
+                } else if (shape.type === 'circle') {
+                  return (
+                    <circle
+                      key={shape.id}
+                      cx={shape.cx}
+                      cy={shape.cy}
+                      r={shape.r}
+                      fill="none"
+                      stroke="#8b5cf6"
+                      strokeWidth="2"
+                      pointerEvents="none"
+                    />
+                  )
+                } else if (shape.type === 'arrow') {
+                  const headlen = 15
+                  const angle = Math.atan2(shape.y2 - shape.y1, shape.x2 - shape.x1)
+                  return (
+                    <g key={shape.id} pointerEvents="none">
+                      <line
+                        x1={shape.x1}
+                        y1={shape.y1}
+                        x2={shape.x2}
+                        y2={shape.y2}
+                        stroke="#ec4899"
+                        strokeWidth="2"
+                      />
+                      <polygon
+                        points={`${shape.x2},${shape.y2} ${shape.x2 - headlen * Math.cos(angle - Math.PI / 6)},${shape.y2 - headlen * Math.sin(angle - Math.PI / 6)} ${shape.x2 - headlen * Math.cos(angle + Math.PI / 6)},${shape.y2 - headlen * Math.sin(angle + Math.PI / 6)}`}
+                        fill="#ec4899"
+                      />
+                    </g>
+                  )
+                } else if (shape.type === 'text') {
+                  return (
+                    <text
+                      key={shape.id}
+                      x={shape.x}
+                      y={shape.y}
+                      fontSize="14"
+                      fill="#1e293b"
+                      pointerEvents="none"
+                    >
+                      {shape.text}
+                    </text>
+                  )
+                } else if (shape.type === 'polygon') {
+                  return (
+                    <polygon
+                      key={shape.id}
+                      points={shape.points}
+                      fill="none"
+                      stroke="#06b6d4"
+                      strokeWidth="2"
+                      pointerEvents="none"
+                    />
+                  )
+                }
+                return null
+              })}
 
               {preview && (
                 preview.type === 'line' ? (
@@ -462,7 +713,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
                     strokeDasharray="5,5"
                     pointerEvents="none"
                   />
-                ) : (
+                ) : preview.type === 'rectangle' ? (
                   <rect
                     x={preview.x}
                     y={preview.y}
@@ -474,7 +725,51 @@ export default function Canvas({ rooms, room, initialSeats }) {
                     strokeDasharray="5,5"
                     pointerEvents="none"
                   />
-                )
+                ) : preview.type === 'circle' ? (
+                  <circle
+                    cx={preview.cx}
+                    cy={preview.cy}
+                    r={preview.r}
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    pointerEvents="none"
+                  />
+                ) : preview.type === 'arrow' ? (
+                  <line
+                    x1={preview.x1}
+                    y1={preview.y1}
+                    x2={preview.x2}
+                    y2={preview.y2}
+                    stroke="#cbd5e1"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    pointerEvents="none"
+                  />
+                ) : null
+              )}
+
+              {polygonPoints.map((point, idx) => (
+                <circle
+                  key={`poly-point-${idx}`}
+                  cx={point.x}
+                  cy={point.y}
+                  r="4"
+                  fill="#06b6d4"
+                  pointerEvents="none"
+                />
+              ))}
+
+              {polygonPoints.length > 0 && (
+                <polyline
+                  points={polygonPoints.map(p => `${p.x},${p.y}`).join(' ')}
+                  fill="none"
+                  stroke="#06b6d4"
+                  strokeWidth="2"
+                  strokeDasharray="5,5"
+                  pointerEvents="none"
+                />
               )}
 
               {seats.map((seat) => (
@@ -497,14 +792,61 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 </g>
               ))}
             </svg>
-            <p className="text-sm text-slate-500 mt-4">
-              {isCreating && <span className="text-cyan-600 font-medium">● 追加中...</span>}
-              {!isCreating && (
-                <>
-                  {seats.length} 個の座席 • ドラッグで移動、マウスアップで自動保存
-                </>
+            <div className="mt-4 flex flex-col gap-3">
+              <p className="text-sm text-slate-500">
+                {isCreating && <span className="text-cyan-600 font-medium">● 追加中...</span>}
+                {!isCreating && (
+                  <>
+                    {seats.length} 個の座席 • ドラッグで移動、マウスアップで自動保存
+                  </>
+                )}
+              </p>
+
+              {tool === 'polygon' && polygonPoints.length > 0 && (
+                <div className="flex gap-2">
+                  <span className="text-sm text-slate-600">
+                    ポリゴンポイント: {polygonPoints.length}個
+                  </span>
+                  <button
+                    onClick={handlePolygonComplete}
+                    disabled={polygonPoints.length < 3}
+                    className="px-3 py-1 text-sm bg-cyan-500 text-white rounded disabled:opacity-50">
+                    完成
+                  </button>
+                  <button
+                    onClick={() => setPolygonPoints([])}
+                    className="px-3 py-1 text-sm bg-slate-300 text-slate-700 rounded">
+                    キャンセル
+                  </button>
+                </div>
               )}
-            </p>
+
+              {textInput && (
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={textInput.text}
+                    onChange={(e) => setTextInput({ ...textInput, text: e.target.value })}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') handleTextSubmit()
+                    }}
+                    placeholder="テキストを入力"
+                    autoFocus
+                    className="px-3 py-1 text-sm border border-slate-300 rounded flex-1"
+                  />
+                  <button
+                    onClick={handleTextSubmit}
+                    className="px-3 py-1 text-sm bg-cyan-500 text-white rounded">
+                    追加
+                  </button>
+                  <button
+                    onClick={() => setTextInput(null)}
+                    className="px-3 py-1 text-sm bg-slate-300 text-slate-700 rounded">
+                    キャンセル
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
         ) : (
           <div className="bg-amber-50 border border-amber-200 rounded-lg px-6 py-8 text-center">
