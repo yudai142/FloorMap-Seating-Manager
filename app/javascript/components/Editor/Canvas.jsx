@@ -31,30 +31,42 @@ export default function Canvas({ rooms, room, initialSeats }) {
   }
 
   const handleRoomSizeUpdate = async () => {
-    if (!currentRoom || !roomSizeInput.width || !roomSizeInput.height) return
+    if (!currentRoom || !roomSizeInput.width || !roomSizeInput.height) {
+      console.warn('Validation failed: missing room or size input')
+      return
+    }
 
     setIsUpdatingRoom(true)
     try {
+      const payload = { room: { width: roomSizeInput.width, height: roomSizeInput.height } }
+      console.log('Updating room size with payload:', payload)
+
       const response = await fetch(`/rooms/${currentRoom.id}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': getCsrfToken()
         },
-        body: JSON.stringify({ room: { width: roomSizeInput.width, height: roomSizeInput.height } })
+        body: JSON.stringify(payload)
       })
 
+      console.log('Response status:', response.status)
+      const responseData = await response.json()
+      console.log('Response data:', responseData)
+
       if (!response.ok) {
-        throw new Error('上面図のサイズ更新に失敗しました')
+        throw new Error(responseData.errors?.[0] || '上面図のサイズ更新に失敗しました')
       }
 
-      const updatedRoom = await response.json()
-      setCurrentRoom(updatedRoom)
+      console.log('Updated room:', responseData)
+      setCurrentRoom(responseData)
+      setRoomSizeInput({ width: responseData.width, height: responseData.height })
       setAlert({ type: 'success', message: 'サイズを更新しました' })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      setAlert({ type: 'error', message: err.message })
       console.error('Room size update error:', err)
+      setAlert({ type: 'error', message: err.message })
+      setTimeout(() => setAlert(null), 3000)
     } finally {
       setIsUpdatingRoom(false)
     }
@@ -578,7 +590,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
             </div>
             <button
               onClick={handleRoomSizeUpdate}
-              disabled={isUpdatingRoom || roomSizeInput.width === currentRoom.width && roomSizeInput.height === currentRoom.height}
+              disabled={isUpdatingRoom || (roomSizeInput.width === currentRoom.width && roomSizeInput.height === currentRoom.height)}
               className="px-3 py-1 text-sm bg-cyan-500 text-white rounded font-medium
                        hover:bg-cyan-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               {isUpdatingRoom ? '更新中...' : 'サイズ更新'}
