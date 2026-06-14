@@ -8,7 +8,7 @@ describe('ErrorAlert', () => {
     render(<ErrorAlert message="Test error" />)
     expect(screen.getByText('エラーが発生しました')).toBeInTheDocument()
     expect(screen.getByText('Test error')).toBeInTheDocument()
-  end)
+  })
 
   it('calls onDismiss when dismiss button is clicked', async () => {
     const user = userEvent.setup()
