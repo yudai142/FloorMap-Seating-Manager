@@ -12,6 +12,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [tool, setTool] = useState('seat')
   const [drawingStart, setDrawingStart] = useState(null)
   const [preview, setPreview] = useState(null)
+  const [skipNextClick, setSkipNextClick] = useState(false)
   const svgRef = useRef(null)
 
   const getCsrfToken = () => {
@@ -26,8 +27,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const handleCanvasClick = async (e) => {
     if (dragging || !currentRoom || isCreating) return
 
-    // 直線または四角形の描画が進行中なら、クリックイベントをスキップ
-    if (drawingStart && (tool === 'line' || tool === 'rectangle')) {
+    // 前の描画が完了したばかりならスキップ
+    if (skipNextClick) {
+      setSkipNextClick(false)
       return
     }
 
@@ -147,6 +149,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setShapes([...shapes, newLine])
     setDrawingStart(null)
     setPreview(null)
+    setSkipNextClick(true)
   }
 
   const handleRectStart = (x, y) => {
@@ -166,6 +169,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setShapes([...shapes, newRect])
     setDrawingStart(null)
     setPreview(null)
+    setSkipNextClick(true)
   }
 
   const handleSeatMouseDown = async (e, seat) => {
