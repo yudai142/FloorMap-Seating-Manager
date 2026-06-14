@@ -1,17 +1,12 @@
 class RoomsController < ApplicationController
   skip_before_action :authenticate_user!, only: []
   before_action :set_room, only: [:show]
-  before_action :invalidate_rooms_cache, only: [:create]
 
   def index
     authorize Room
     @q = Room.ransack(params[:q])
     
-    # キャッシュキーに検索パラメータを含める
-    cache_key = "rooms_page_#{params[:page]}_#{params[:q].inspect}"
-    @rooms = Rails.cache.fetch(cache_key, expires_in: 5.minutes) do
-      @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
-    end
+    @rooms = @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
 
     render inertia: 'Rooms/Index', props: {
       rooms: @rooms.as_json(only: %i[id name width height]),
@@ -38,8 +33,7 @@ class RoomsController < ApplicationController
     authorize Room
     @room = Room.new(room_params)
     if @room.save
-      invalidate_rooms_cache
-      redirect_to rooms_path, notice: '上面図を作成しました'
+      redirect_to rooms_path, notice: 'ルームを作成しました'
     else
       @q = Room.ransack(params[:q])
       @rooms = @q.result.includes(:seats).order(:created_at).page(params[:page]).per(20)
@@ -66,10 +60,6 @@ class RoomsController < ApplicationController
 
   def room_params
     params.require(:room).permit(:name, :width, :height, :floor_plan_image)
-  end
-
-  def invalidate_rooms_cache
-    Rails.cache.delete_matched("rooms_page_*")
   end
 
   def export_csv
