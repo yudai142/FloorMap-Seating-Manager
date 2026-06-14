@@ -385,29 +385,29 @@ export default function Canvas({ rooms, room, initialSeats }) {
             </button>
           </div>
 
-          {(tool === 'line' || tool === 'rectangle') && (
-            <div className="flex gap-3">
-              <label className="text-sm font-medium text-slate-700">描画方法:</label>
-              <button
-                onClick={() => setDrawMode('click')}
-                className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
-                  drawMode === 'click'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                }`}>
-                2点選択
-              </button>
-              <button
-                onClick={() => setDrawMode('drag')}
-                className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
-                  drawMode === 'drag'
-                    ? 'bg-indigo-500 text-white'
-                    : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
-                }`}>
-                ドラッグ
-              </button>
-            </div>
-          )}
+          <div className="flex gap-3">
+            <label className="text-sm font-medium text-slate-700">描画方法:</label>
+            <button
+              onClick={() => setDrawMode('click')}
+              disabled={tool !== 'line' && tool !== 'rectangle'}
+              className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
+                drawMode === 'click'
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              } disabled:opacity-40 disabled:cursor-not-allowed`}>
+              2点選択
+            </button>
+            <button
+              onClick={() => setDrawMode('drag')}
+              disabled={tool !== 'line' && tool !== 'rectangle'}
+              className={`px-3 py-1 rounded font-medium transition-colors text-sm ${
+                drawMode === 'drag'
+                  ? 'bg-indigo-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              } disabled:opacity-40 disabled:cursor-not-allowed`}>
+              ドラッグ
+            </button>
+          </div>
         </div>
 
         {currentRoom ? (
