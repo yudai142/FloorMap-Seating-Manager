@@ -20,6 +20,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [isUpdatingRoom, setIsUpdatingRoom] = useState(false)
   const [isResizing, setIsResizing] = useState(false)
   const [resizeStart, setResizeStart] = useState(null)
+  const [zoom, setZoom] = useState(1)
   const svgRef = useRef(null)
   const svgContainerRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -118,6 +119,18 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const getCsrfToken = () => {
     return document.querySelector('meta[name="csrf-token"]').content
+  }
+
+  const handleZoomIn = () => {
+    setZoom(prev => Math.min(prev + 0.1, 3))
+  }
+
+  const handleZoomOut = () => {
+    setZoom(prev => Math.max(prev - 0.1, 0.1))
+  }
+
+  const handleZoomReset = () => {
+    setZoom(1)
   }
 
   const handleRoomSizeUpdate = async () => {
@@ -801,6 +814,28 @@ export default function Canvas({ rooms, room, initialSeats }) {
               ドラッグ
             </button>
           </div>
+
+          <div className="flex gap-3 items-center">
+            <label className="text-sm font-medium text-slate-700">ズーム:</label>
+            <button
+              onClick={handleZoomOut}
+              className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm">
+              −
+            </button>
+            <span className="text-sm font-medium text-slate-700 w-16 text-center">
+              {Math.round(zoom * 100)}%
+            </span>
+            <button
+              onClick={handleZoomIn}
+              className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm">
+              +
+            </button>
+            <button
+              onClick={handleZoomReset}
+              className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm">
+              リセット
+            </button>
+          </div>
         </div>
 
       </div>
@@ -811,7 +846,13 @@ export default function Canvas({ rooms, room, initialSeats }) {
             <div
               ref={svgContainerRef}
               className="relative inline-block"
-              style={{ width: `${Math.round(roomSizeInput.width)}px`, height: `${Math.round(roomSizeInput.height)}px` }}
+              style={{
+                width: `${Math.round(roomSizeInput.width)}px`,
+                height: `${Math.round(roomSizeInput.height)}px`,
+                transform: `scale(${zoom})`,
+                transformOrigin: 'top left',
+                transition: 'transform 0.1s ease-out'
+              }}
             >
               <svg
                 ref={svgRef}
