@@ -22,6 +22,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
   const [resizeStart, setResizeStart] = useState(null)
   const svgRef = useRef(null)
   const svgContainerRef = useRef(null)
+  const scrollContainerRef = useRef(null)
 
   useEffect(() => {
     if (currentRoom) {
@@ -54,34 +55,37 @@ export default function Canvas({ rooms, room, initialSeats }) {
       setRoomSizeInput({ width: newWidth, height: newHeight })
 
       // オートスクロール：マウスが画面端に近づいたらスクロール
-      const scrollThreshold = 80
-      let scrollX = 0
-      let scrollY = 0
+      if (scrollContainerRef.current) {
+        const scrollThreshold = 80
+        let scrollX = 0
+        let scrollY = 0
 
-      // 上方向
-      if (e.clientY < scrollThreshold) {
-        const proximity = scrollThreshold - e.clientY
-        scrollY = -(Math.min(proximity, 20) + 5)
-      }
-      // 下方向
-      if (window.innerHeight - e.clientY < scrollThreshold) {
-        const proximity = scrollThreshold - (window.innerHeight - e.clientY)
-        scrollY = Math.min(proximity, 20) + 5
-      }
+        // 上方向
+        if (e.clientY < scrollThreshold) {
+          const proximity = scrollThreshold - e.clientY
+          scrollY = -(Math.min(proximity, 20) + 5)
+        }
+        // 下方向
+        if (window.innerHeight - e.clientY < scrollThreshold) {
+          const proximity = scrollThreshold - (window.innerHeight - e.clientY)
+          scrollY = Math.min(proximity, 20) + 5
+        }
 
-      // 左方向
-      if (e.clientX < scrollThreshold) {
-        const proximity = scrollThreshold - e.clientX
-        scrollX = -(Math.min(proximity, 20) + 5)
-      }
-      // 右方向
-      if (window.innerWidth - e.clientX < scrollThreshold) {
-        const proximity = scrollThreshold - (window.innerWidth - e.clientX)
-        scrollX = Math.min(proximity, 20) + 5
-      }
+        // 左方向
+        if (e.clientX < scrollThreshold) {
+          const proximity = scrollThreshold - e.clientX
+          scrollX = -(Math.min(proximity, 20) + 5)
+        }
+        // 右方向
+        if (window.innerWidth - e.clientX < scrollThreshold) {
+          const proximity = scrollThreshold - (window.innerWidth - e.clientX)
+          scrollX = Math.min(proximity, 20) + 5
+        }
 
-      if (scrollX !== 0 || scrollY !== 0) {
-        window.scrollBy(scrollX, scrollY)
+        if (scrollX !== 0 || scrollY !== 0) {
+          scrollContainerRef.current.scrollLeft += scrollX
+          scrollContainerRef.current.scrollTop += scrollY
+        }
       }
     }
 
@@ -806,7 +810,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
       </div>
 
       {currentRoom ? (
-        <div className="flex-1 overflow-auto bg-white border-t border-slate-200">
+        <div ref={scrollContainerRef} className="flex-1 overflow-auto bg-white border-t border-slate-200">
           <div className="p-6 inline-block">
             <div
               ref={svgContainerRef}
