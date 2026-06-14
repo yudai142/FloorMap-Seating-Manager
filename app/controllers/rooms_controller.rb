@@ -56,12 +56,18 @@ class RoomsController < ApplicationController
   end
 
   def update
-    @room = Room.find(params[:id])
-    authorize @room
-    if @room.update(room_params)
-      render json: @room.as_json(only: %i[id name width height]), status: :ok
-    else
-      render json: { errors: @room.errors.messages }, status: :unprocessable_entity
+    begin
+      @room = Room.find(params[:id])
+      authorize @room
+      if @room.update(room_params)
+        render json: @room.as_json(only: %i[id name width height]), status: :ok
+      else
+        render json: { errors: @room.errors.messages }, status: :unprocessable_entity
+      end
+    rescue Pundit::NotAuthorizedError
+      render json: { error: '権限がありません' }, status: :forbidden
+    rescue ActiveRecord::RecordNotFound
+      render json: { error: '上面図が見つかりません' }, status: :not_found
     end
   end
 

@@ -39,7 +39,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setIsUpdatingRoom(true)
     try {
       const payload = { room: { width: roomSizeInput.width, height: roomSizeInput.height } }
-      console.log('Updating room size with payload:', payload)
+      console.log('Updating room size:', { roomId: currentRoom.id, payload })
 
       const response = await fetch(`/rooms/${currentRoom.id}`, {
         method: 'PATCH',
@@ -51,20 +51,36 @@ export default function Canvas({ rooms, room, initialSeats }) {
       })
 
       console.log('Response status:', response.status)
-      const responseData = await response.json()
+      console.log('Response headers:', {
+        contentType: response.headers.get('content-type'),
+        ok: response.ok
+      })
+
+      const responseText = await response.text()
+      console.log('Response text:', responseText)
+
+      let responseData
+      try {
+        responseData = JSON.parse(responseText)
+      } catch (e) {
+        console.error('JSON parse failed:', e.message)
+        throw new Error(`サーバーエラー (${response.status}): JSON解析失敗`)
+      }
+
       console.log('Response data:', responseData)
 
       if (!response.ok) {
-        throw new Error(responseData.errors?.[0] || '上面図のサイズ更新に失敗しました')
+        const errorMsg = responseData.error || responseData.errors?.[0] || '上面図のサイズ更新に失敗しました'
+        throw new Error(errorMsg)
       }
 
-      console.log('Updated room:', responseData)
+      console.log('Updated room successfully:', responseData)
       setCurrentRoom(responseData)
       setRoomSizeInput({ width: responseData.width, height: responseData.height })
       setAlert({ type: 'success', message: 'サイズを更新しました' })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      console.error('Room size update error:', err)
+      console.error('Room size update error:', err.message)
       setAlert({ type: 'error', message: err.message })
       setTimeout(() => setAlert(null), 3000)
     } finally {
