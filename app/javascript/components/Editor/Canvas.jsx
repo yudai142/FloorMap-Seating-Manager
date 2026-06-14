@@ -5,9 +5,13 @@ import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 export default function Canvas({ rooms, room, initialSeats }) {
   const [currentRoom, setCurrentRoom] = useState(room)
   const [seats, setSeats] = useState(initialSeats || [])
+  const [shapes, setShapes] = useState([])
   const [dragging, setDragging] = useState(null)
   const [alert, setAlert] = useState(null)
   const [isCreating, setIsCreating] = useState(false)
+  const [tool, setTool] = useState('seat')
+  const [drawingStart, setDrawingStart] = useState(null)
+  const [preview, setPreview] = useState(null)
   const svgRef = useRef(null)
 
   const getCsrfToken = () => {
@@ -25,6 +29,17 @@ export default function Canvas({ rooms, room, initialSeats }) {
     const rect = svgRef.current.getBoundingClientRect()
     const x = Math.round(e.clientX - rect.left)
     const y = Math.round(e.clientY - rect.top)
+
+    if (tool === 'seat') {
+      await handleAddSeat(x, y)
+    } else if (tool === 'line') {
+      handleLineStart(x, y)
+    } else if (tool === 'rectangle') {
+      handleRectStart(x, y)
+    }
+  }
+
+  const handleAddSeat = async (x, y) => {
     const newLabel = `S${seats.length + 1}`
 
     setIsCreating(true)
@@ -55,6 +70,48 @@ export default function Canvas({ rooms, room, initialSeats }) {
     }
   }
 
+  const handleLineStart = (x, y) => {
+    setDrawingStart({ x, y })
+  }
+
+  const handleLineEnd = (x, y) => {
+    if (!drawingStart) return
+    const newLine = {
+      id: `line-${Date.now()}`,
+      type: 'line',
+      x1: drawingStart.x,
+      y1: drawingStart.y,
+      x2: x,
+      y2: y
+    }
+    setShapes([...shapes, newLine])
+    setDrawingStart(null)
+    setPreview(null)
+    setAlert({ type: 'success', message: '直線を追加しました' })
+    setTimeout(() => setAlert(null), 2000)
+  }
+
+  const handleRectStart = (x, y) => {
+    setDrawingStart({ x, y })
+  }
+
+  const handleRectEnd = (x, y) => {
+    if (!drawingStart) return
+    const newRect = {
+      id: `rect-${Date.now()}`,
+      type: 'rectangle',
+      x: Math.min(drawingStart.x, x),
+      y: Math.min(drawingStart.y, y),
+      width: Math.abs(x - drawingStart.x),
+      height: Math.abs(y - drawingStart.y)
+    }
+    setShapes([...shapes, newRect])
+    setDrawingStart(null)
+    setPreview(null)
+    setAlert({ type: 'success', message: '四角形を追加しました' })
+    setTimeout(() => setAlert(null), 2000)
+  }
+
   const handleSeatMouseDown = (e, seat) => {
     e.stopPropagation()
     if (isCreating) return
@@ -65,42 +122,74 @@ export default function Canvas({ rooms, room, initialSeats }) {
   }
 
   const handleMouseMove = (e) => {
-    if (!dragging || !svgRef.current) return
+    if (!svgRef.current) return
 
     const rect = svgRef.current.getBoundingClientRect()
-    const newX = Math.max(0, Math.min(e.clientX - rect.left - dragging.offsetX, currentRoom.width))
-    const newY = Math.max(0, Math.min(e.clientY - rect.top - dragging.offsetY, currentRoom.height))
+    const x = Math.round(e.clientX - rect.left)
+    const y = Math.round(e.clientY - rect.top)
 
-    setSeats(seats.map(s =>
-      s.id === dragging.id ? { ...s, x: Math.round(newX), y: Math.round(newY) } : s
-    ))
+    if (dragging) {
+      const newX = Math.max(0, Math.min(x - dragging.offsetX, currentRoom.width))
+      const newY = Math.max(0, Math.min(y - dragging.offsetY, currentRoom.height))
+
+      setSeats(seats.map(s =>
+        s.id === dragging.id ? { ...s, x: Math.round(newX), y: Math.round(newY) } : s
+      ))
+    } else if (drawingStart) {
+      if (tool === 'line') {
+        setPreview({
+          type: 'line',
+          x1: drawingStart.x,
+          y1: drawingStart.y,
+          x2: x,
+          y2: y
+        })
+      } else if (tool === 'rectangle') {
+        setPreview({
+          type: 'rectangle',
+          x: Math.min(drawingStart.x, x),
+          y: Math.min(drawingStart.y, y),
+          width: Math.abs(x - drawingStart.x),
+          height: Math.abs(y - drawingStart.y)
+        })
+      }
+    }
   }
 
   const handleMouseUp = async (e) => {
-    if (!dragging) return
+    if (dragging) {
+      const seat = seats.find(s => s.id === dragging.id)
+      if (seat) {
+        try {
+          const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
+            method: 'PATCH',
+            headers: {
+              'Content-Type': 'application/json',
+              'X-CSRF-Token': getCsrfToken()
+            },
+            body: JSON.stringify({ seat: { x: seat.x, y: seat.y } })
+          })
 
-    const seat = seats.find(s => s.id === dragging.id)
-    if (seat) {
-      try {
-        const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
-          method: 'PATCH',
-          headers: {
-            'Content-Type': 'application/json',
-            'X-CSRF-Token': getCsrfToken()
-          },
-          body: JSON.stringify({ seat: { x: seat.x, y: seat.y } })
-        })
-
-        if (!response.ok) {
-          throw new Error('座席の位置を保存できませんでした')
+          if (!response.ok) {
+            throw new Error('座席の位置を保存できませんでした')
+          }
+        } catch (err) {
+          setAlert({ type: 'error', message: err.message })
+          console.error('Seat update error:', err)
         }
-      } catch (err) {
-        setAlert({ type: 'error', message: err.message })
-        console.error('Seat update error:', err)
+      }
+      setDragging(null)
+    } else if (drawingStart && tool) {
+      const rect = svgRef.current.getBoundingClientRect()
+      const x = Math.round(e.clientX - rect.left)
+      const y = Math.round(e.clientY - rect.top)
+
+      if (tool === 'line') {
+        handleLineEnd(x, y)
+      } else if (tool === 'rectangle') {
+        handleRectEnd(x, y)
       }
     }
-
-    setDragging(null)
   }
 
   return (
@@ -111,7 +200,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
             ← 戻る
           </a>
           <h1 className="text-3xl font-bold text-slate-800">上面図エディタ</h1>
-          <p className="text-slate-500 text-sm mt-1">座席をクリックして追加、ドラッグして移動</p>
+          <p className="text-slate-500 text-sm mt-1">ツールを選択して、キャンバスをクリック・ドラッグして描画</p>
         </div>
 
         {alert && (
@@ -136,7 +225,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
             id="room-select"
             value={currentRoom?.id || ''}
             onChange={handleRoomChange}
-            disabled={isCreating || dragging}
+            disabled={isCreating || dragging || drawingStart}
             className="px-3 py-2 border border-slate-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-cyan-400
                      disabled:bg-slate-100 disabled:text-slate-500">
@@ -146,6 +235,36 @@ export default function Canvas({ rooms, room, initialSeats }) {
               </option>
             ))}
           </select>
+        </div>
+
+        <div className="mb-6 flex gap-3">
+          <button
+            onClick={() => setTool('seat')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              tool === 'seat'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}>
+            座席追加
+          </button>
+          <button
+            onClick={() => setTool('line')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              tool === 'line'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}>
+            直線
+          </button>
+          <button
+            onClick={() => setTool('rectangle')}
+            className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+              tool === 'rectangle'
+                ? 'bg-cyan-500 text-white'
+                : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+            }`}>
+            四角形
+          </button>
         </div>
 
         {currentRoom ? (
@@ -162,6 +281,60 @@ export default function Canvas({ rooms, room, initialSeats }) {
               onMouseUp={handleMouseUp}
               onMouseLeave={handleMouseUp}
             >
+              {shapes.map((shape) => (
+                shape.type === 'line' ? (
+                  <line
+                    key={shape.id}
+                    x1={shape.x1}
+                    y1={shape.y1}
+                    x2={shape.x2}
+                    y2={shape.y2}
+                    stroke="#6366f1"
+                    strokeWidth="2"
+                    pointerEvents="none"
+                  />
+                ) : (
+                  <rect
+                    key={shape.id}
+                    x={shape.x}
+                    y={shape.y}
+                    width={shape.width}
+                    height={shape.height}
+                    fill="none"
+                    stroke="#f97316"
+                    strokeWidth="2"
+                    pointerEvents="none"
+                  />
+                )
+              ))}
+
+              {preview && (
+                preview.type === 'line' ? (
+                  <line
+                    x1={preview.x1}
+                    y1={preview.y1}
+                    x2={preview.x2}
+                    y2={preview.y2}
+                    stroke="#94a3b8"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    pointerEvents="none"
+                  />
+                ) : (
+                  <rect
+                    x={preview.x}
+                    y={preview.y}
+                    width={preview.width}
+                    height={preview.height}
+                    fill="none"
+                    stroke="#cbd5e1"
+                    strokeWidth="2"
+                    strokeDasharray="5,5"
+                    pointerEvents="none"
+                  />
+                )
+              )}
+
               {seats.map((seat) => (
                 <g
                   key={seat.id}
