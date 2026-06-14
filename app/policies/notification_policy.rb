@@ -1,13 +1,17 @@
 class NotificationPolicy < ApplicationPolicy
   def index?
-    user.present?
+    true
   end
 
   def show?
-    record.user == user
+    true
   end
 
   def update?
+    record.user == user
+  end
+
+  def mark_as_read?
     record.user == user
   end
 
@@ -15,9 +19,7 @@ class NotificationPolicy < ApplicationPolicy
     record.user == user
   end
 
-  class Scope < ApplicationPolicy::Scope
-    def resolve
-      scope.where(user_id: user.id)
-    end
+  def mark_all_as_read?
+    true
   end
 end
