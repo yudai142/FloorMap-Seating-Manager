@@ -824,7 +824,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
                 onMouseDown={handleCanvasMouseDown}
                 onMouseMove={handleMouseMove}
                 onMouseUp={handleMouseUp}
-                onMouseLeave={handleMouseUp}
+                onMouseLeave={(e) => {
+                  if (!isResizing) handleMouseUp(e)
+                }}
               >
               {shapes.map((shape) => {
                 if (shape.type === 'line') {
