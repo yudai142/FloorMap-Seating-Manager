@@ -89,5 +89,5 @@ Rails.application.configure do
   # config.host_authorization = { exclude: ->(request) { request.path == "/up" } }
 
   # Inertia.js configuration for production
-  config.inertia.check_server_side_errors = true
+  config.inertia.check_server_side_errors = true if config.respond_to?(:inertia)
 end
