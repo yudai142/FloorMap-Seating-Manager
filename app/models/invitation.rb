@@ -4,7 +4,7 @@ class Invitation < ApplicationRecord
   validates :email, :token, :role, presence: true
   validates :token, uniqueness: true
   validates :email, format: { with: URI::MailTo::EMAIL_REGEXP }
-  enum role: { user: 0, manager: 1, admin: 2 }
+  enum :role, { user: 0, manager: 1, admin: 2 }
   
   before_create :generate_token
   

@@ -1,6 +1,6 @@
 class Backup < ApplicationRecord
-  enum status: { pending: 'pending', in_progress: 'in_progress', completed: 'completed', failed: 'failed' }
-  enum backup_type: { automatic: 'automatic', manual: 'manual' }
+  enum :status, { pending: 'pending', in_progress: 'in_progress', completed: 'completed', failed: 'failed' }
+  enum :backup_type, { automatic: 'automatic', manual: 'manual' }
 
   scope :recent, -> { order(created_at: :desc) }
   scope :successful, -> { where(status: :completed) }
