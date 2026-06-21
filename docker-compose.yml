@@ -15,19 +15,19 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: bash -lc "until pg_isready -h db -p 5432 -q; do echo 'waiting for db'; sleep 1; done; bundle exec rails db:create db:migrate || true; rm -f tmp/pids/server.pid; npx vite --host 0.0.0.0 --port 3036 & sleep 3; exec ./bin/rails server -b 0.0.0.0 -p 3000"
+    command: bash -lc "until pg_isready -h db -p 5432 -q; do echo 'waiting for db'; sleep 1; done; bundle exec rails db:create db:migrate || true; rm -f tmp/pids/server.pid; npx vite --host 0.0.0.0 --port 5173 & sleep 3; exec ./bin/rails server -b 0.0.0.0 -p 3000"
     volumes:
       - .:/app:cached
       - bundle:/usr/local/bundle
     ports:
       - "3000:3000"
-      - "3036:3036"
+      - "5173:5173"
     environment:
       DATABASE_HOST: db
       DATABASE_URL: postgres://postgres:password@db:5432/floormap_development
       BUNDLE_PATH: /usr/local/bundle
       VITE_HMR_HOST: localhost
-      VITE_HMR_PORT: 3036
+      VITE_HMR_PORT: 5173
       VITE_HMR_PROTOCOL: http
     depends_on:
       - db
