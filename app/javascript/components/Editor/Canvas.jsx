@@ -167,6 +167,10 @@ export default function Canvas({ rooms, room, initialSeats }) {
   }
 
   const handleSaveShapes = async () => {
+    console.log('📝 handleSaveShapes called')
+    console.log('  currentRoom:', currentRoom)
+    console.log('  shapes:', shapes)
+
     if (!currentRoom) {
       setAlert({ type: 'error', message: 'ルームが選択されていません' })
       return
@@ -174,6 +178,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
     try {
       const payload = { room: { shapes_data: shapes } }
+      console.log('📤 Sending payload:', payload)
+
       const response = await fetch(`/rooms/${currentRoom.id}`, {
         method: 'PATCH',
         headers: {
@@ -183,11 +189,16 @@ export default function Canvas({ rooms, room, initialSeats }) {
         body: JSON.stringify(payload)
       })
 
+      console.log('📥 Response status:', response.status)
+
       if (!response.ok) {
+        const errorText = await response.text()
+        console.error('❌ Response error:', errorText)
         throw new Error('図形の保存に失敗しました')
       }
 
       const responseData = await response.json()
+      console.log('✅ Response data:', responseData)
       setCurrentRoom(responseData)
       setAlert({ type: 'success', message: '図形を保存しました' })
       setTimeout(() => setAlert(null), 2000)

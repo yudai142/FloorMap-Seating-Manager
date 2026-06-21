@@ -20,8 +20,13 @@
     <meta name="apple-mobile-web-app-title" content="FloorMap">
 
     <%# Vite assets %>
-    <link rel="stylesheet" href="/vite-prod/assets/application.DI9c9F2Y.css">
-    <script type="module" src="/vite-prod/assets/entrypoints/application.jsx.4WUo0cEo.js"></script>
+    <% if Rails.env.development? %>
+      <%= vite_stylesheet_tag "application" %>
+      <%= vite_javascript_tag "application" %>
+    <% else %>
+      <link rel="stylesheet" href="/vite-prod/assets/application.DI9c9F2Y.css">
+      <script type="module" src="/vite-prod/assets/entrypoints/application.jsx.b4t30ymB.js"></script>
+    <% end %>
   </head>
 
   <body>
