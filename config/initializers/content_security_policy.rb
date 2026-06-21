@@ -10,10 +10,10 @@ Rails.application.config.content_security_policy do |policy|
   policy.frame_src   :self
   policy.child_src   :self
 
-  # Vite development server (localhost:3036)
+  # Vite development server (localhost:5173)
   if Rails.env.development?
-    policy.script_src  :self, :https, :unsafe_inline, :http, 'http://localhost:3036'
-    policy.style_src   :self, :https, :unsafe_inline, 'http://localhost:3036'
-    policy.connect_src :self, :wss, :ws, 'http://localhost:3036', 'ws://localhost:3036'
+    policy.script_src  :self, :https, :unsafe_inline, :http, 'http://localhost:5173'
+    policy.style_src   :self, :https, :unsafe_inline, 'http://localhost:5173'
+    policy.connect_src :self, :wss, :ws, 'http://localhost:5173', 'ws://localhost:5173'
   end
 end
