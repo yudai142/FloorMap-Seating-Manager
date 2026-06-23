@@ -20,16 +20,19 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
       return
     }
 
+    console.log('Submitting form with data:', data)
     post('/rooms', {
-      onSuccess: () => {
+      onSuccess: (response) => {
+        console.log('Create success:', response)
         setAlert({ type: 'success', message: '上面図を作成しました' })
         setData({ name: '', width: 800, height: 600 })
         setShowForm(false)
         // ページをリロードして、新しく作成された上面図を表示
-        setTimeout(() => router.visit('/'), 1500)
+        router.visit('/rooms')
       },
       onError: (errors) => {
-        const errorMessage = errors.name?.[0] || '作成に失敗しました'
+        console.log('Create error:', errors)
+        const errorMessage = errors.name?.[0] || JSON.stringify(errors) || '作成に失敗しました'
         setAlert({ type: 'error', message: errorMessage })
       }
     })

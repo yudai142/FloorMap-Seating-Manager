@@ -19,13 +19,19 @@
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="FloorMap">
 
-    <%# Vite assets %>
-    <% if Rails.env.development? %>
-      <link rel="stylesheet" href="http://localhost:3037/app/javascript/entrypoints/application.css">
-      <script type="module" src="http://localhost:3037/app/javascript/entrypoints/application.jsx"></script>
-    <% else %>
-      <link rel="stylesheet" href="/vite-prod/assets/application.DI9c9F2Y.css">
-      <script type="module" src="/vite-prod/assets/entrypoints/application.jsx.b4t30ymB.js"></script>
+    <%# Vite Assets %>
+    <%
+      manifest_path = Rails.root.join('public/vite-dev/.vite/manifest.json')
+      manifest = JSON.parse(File.read(manifest_path)) rescue {}
+      app_manifest = manifest['entrypoints/application.jsx'] || {}
+    %>
+    <% if app_manifest['css'] %>
+      <% app_manifest['css'].each do |css_file| %>
+        <link rel="stylesheet" href="/vite-dev/<%= css_file %>">
+      <% end %>
+    <% end %>
+    <% if app_manifest['file'] %>
+      <script type="module" src="/vite-dev/<%= app_manifest['file'] %>"></script>
     <% end %>
   </head>
 

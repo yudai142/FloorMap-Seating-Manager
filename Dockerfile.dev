@@ -52,4 +52,4 @@ EXPOSE 3000
 RUN apt-get update -qq && apt-get install -y --no-install-recommends tini || true
 
 ENTRYPOINT ["/usr/bin/tini", "--"]
-CMD ["./bin/dev"]
+CMD ["bash"]
