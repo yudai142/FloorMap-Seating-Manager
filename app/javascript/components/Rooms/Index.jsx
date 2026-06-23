@@ -12,6 +12,10 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
     height: 600
   })
 
+  React.useEffect(() => {
+    console.log('RoomsIndex component mounted')
+  }, [])
+
   const handleSubmit = (e) => {
     e.preventDefault()
 

@@ -32,12 +32,9 @@ class RoomsController < ApplicationController
   def create
     authorize Room
     @room = Room.new(room_params)
-    Rails.logger.info("Creating room with params: #{room_params.inspect}")
     if @room.save
-      Rails.logger.info("Room created successfully: ID=#{@room.id}, Name=#{@room.name}")
       redirect_to rooms_path, notice: 'ルームを作成しました'
     else
-      Rails.logger.error("Room save failed: #{@room.errors.messages.inspect}")
       @q = Room.ransack(params[:q])
       @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
