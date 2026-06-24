@@ -26,13 +26,11 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
 
     console.log('Submitting form with data:', data)
     post('/rooms', {
-      onSuccess: (response) => {
-        console.log('Create success:', response)
+      onSuccess: () => {
+        console.log('Create success')
         setAlert({ type: 'success', message: '上面図を作成しました' })
         setData({ name: '', width: 800, height: 600 })
         setShowForm(false)
-        // ページをリロードして、新しく作成された上面図を表示
-        router.visit('/rooms')
       },
       onError: (errors) => {
         console.log('Create error:', errors)
