@@ -1,8 +1,9 @@
 class SeatsController < ApplicationController
   before_action :authenticate_user!
+  before_action :set_room, only: [:create]
+  before_action :set_seat, only: [:update, :check_in, :check_out, :destroy]
 
   def create
-    @room = Room.find(params[:room_id])
     @seat = @room.seats.build(seat_params)
     if @seat.save
       render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :created
@@ -70,12 +71,26 @@ class SeatsController < ApplicationController
   end
 
   def destroy
-    @seat = Seat.find(params[:id])
     @seat.destroy
     render json: { id: @seat.id }, status: :ok
   end
 
   private
+
+  def set_room
+    @room = current_user.rooms.find(params[:room_id])
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: '上面図が見つかりません' }, status: :not_found
+  end
+
+  def set_seat
+    @seat = Seat.find(params[:id])
+    unless @seat.room.user_id == current_user.id
+      render json: { error: '権限がありません' }, status: :forbidden
+    end
+  rescue ActiveRecord::RecordNotFound
+    render json: { error: '座席が見つかりません' }, status: :not_found
+  end
 
   def seat_params
     params.require(:seat).permit(:label, :x, :y, :occupied, :occupant_name)
