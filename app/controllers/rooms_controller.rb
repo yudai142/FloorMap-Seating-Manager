@@ -75,16 +75,7 @@ class RoomsController < ApplicationController
   end
 
   def room_params
-    # For shapes_data, we need to accept all nested attributes since shapes vary in structure
-    # Use a custom approach to allow arbitrary nested hashes
-    permitted = params.require(:room).permit(:name, :width, :height, :floor_plan_image)
-
-    # Handle shapes_data separately to allow arbitrary nested structures
-    if params[:room][:shapes_data].present?
-      permitted[:shapes_data] = params[:room][:shapes_data]
-    end
-
-    permitted
+    params.require(:room).permit(:name, :width, :height, :floor_plan_image, shapes_data: {})
   end
 
   def export_csv
