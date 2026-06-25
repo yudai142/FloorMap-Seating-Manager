@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_000001) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -104,7 +104,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
     t.string "name", null: false
     t.jsonb "shapes_data", default: []
     t.datetime "updated_at", null: false
+    t.bigint "user_id"
     t.integer "width", default: 0, null: false
+    t.index ["user_id"], name: "index_rooms_on_user_id"
   end
 
   create_table "seats", force: :cascade do |t|
@@ -156,5 +158,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_15_000000) do
   add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "notification_preferences", "users"
   add_foreign_key "notifications", "users"
+  add_foreign_key "rooms", "users"
   add_foreign_key "seats", "rooms"
 end

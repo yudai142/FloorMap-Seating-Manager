@@ -4,7 +4,7 @@ class RoomPolicy < ApplicationPolicy
   end
 
   def show?
-    user.present?
+    user.present? && record.user_id == user.id
   end
 
   def create?
@@ -12,16 +12,16 @@ class RoomPolicy < ApplicationPolicy
   end
 
   def update?
-    user.present?
+    user.present? && record.user_id == user.id
   end
 
   def destroy?
-    user.present? && user.admin?
+    user.present? && record.user_id == user.id
   end
 
   class Scope < ApplicationPolicy::Scope
     def resolve
-      @scope.all
+      @scope.where(user_id: @user.id)
     end
   end
 end
