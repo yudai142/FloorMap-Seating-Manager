@@ -75,7 +75,10 @@ class RoomsController < ApplicationController
   end
 
   def room_params
-    params.require(:room).permit(:name, :width, :height, :floor_plan_image, shapes_data: {})
+    params.require(:room).permit(
+      :name, :width, :height, :floor_plan_image,
+      shapes_data: [:id, :type, :x, :y, :x1, :y1, :x2, :y2, :cx, :cy, :r, :width, :height, :text, :points, :pointsArray]
+    )
   end
 
   def export_csv
