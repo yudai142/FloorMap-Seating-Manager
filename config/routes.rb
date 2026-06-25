@@ -1,6 +1,9 @@
 Rails.application.routes.draw do
   get "up" => "rails/health#show", as: :rails_health_check
 
+  # PWA Service Worker
+  get "service-worker.js", to: "pwa#service_worker", as: :service_worker
+
   devise_for :users
 
   resources :rooms, only: %i[index show create update] do
