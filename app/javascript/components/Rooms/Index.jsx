@@ -30,6 +30,7 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
 
     console.log('[RoomCreate] Submitting form with data:', data)
     post('/rooms', {
+      data: { room: data },
       onSuccess: () => {
         console.log('[RoomCreate] Room created successfully, reloading page')
         setAlert({ type: 'success', message: '上面図を作成しました' })
