@@ -13,8 +13,12 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
   })
 
   React.useEffect(() => {
-    console.log('RoomsIndex component mounted')
+    console.log('[RoomsIndex] Component mounted with', rooms.length, 'rooms')
   }, [])
+
+  React.useEffect(() => {
+    console.log('[RoomsIndex] Props updated:', rooms.length, 'rooms')
+  }, [rooms])
 
   const handleSubmit = (e) => {
     e.preventDefault()
@@ -24,16 +28,20 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
       return
     }
 
-    console.log('Submitting form with data:', data)
+    console.log('[RoomCreate] Submitting form with data:', data)
     post('/rooms', {
       onSuccess: () => {
-        console.log('Create success')
+        console.log('[RoomCreate] Room created successfully, reloading page')
         setAlert({ type: 'success', message: '上面図を作成しました' })
         setData({ name: '', width: 800, height: 600 })
         setShowForm(false)
+        // Reload the page after a short delay to ensure the server has processed the redirect
+        setTimeout(() => {
+          window.location.href = '/rooms'
+        }, 100)
       },
       onError: (errors) => {
-        console.log('Create error:', errors)
+        console.log('[RoomCreate] onError called with errors:', errors)
         const errorMessage = errors.name?.[0] || JSON.stringify(errors) || '作成に失敗しました'
         setAlert({ type: 'error', message: errorMessage })
       }

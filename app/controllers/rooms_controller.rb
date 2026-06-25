@@ -33,7 +33,7 @@ class RoomsController < ApplicationController
     authorize Room
     @room = Room.new(room_params)
     if @room.save
-      redirect_to rooms_path, notice: 'ルームを作成しました'
+      redirect_to rooms_path, status: :see_other
     else
       @q = Room.ransack(params[:q])
       @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
