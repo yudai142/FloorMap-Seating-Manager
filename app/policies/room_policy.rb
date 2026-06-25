@@ -8,7 +8,7 @@ class RoomPolicy < ApplicationPolicy
   end
 
   def create?
-    user.present? && user.manager?
+    user.present?
   end
 
   def update?
