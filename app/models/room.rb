@@ -1,4 +1,5 @@
 class Room < ApplicationRecord
+  belongs_to :user
   has_many :seats, dependent: :destroy
   has_paper_trail
   has_one_attached :floor_plan_image do |attachable|

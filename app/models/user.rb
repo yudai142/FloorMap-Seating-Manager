@@ -4,6 +4,7 @@ class User < ApplicationRecord
 
   has_many :notifications, dependent: :destroy
   has_many :notification_preferences, dependent: :destroy
+  has_many :rooms, dependent: :destroy
 
   enum :role, { user: 0, manager: 1, admin: 2 }
 

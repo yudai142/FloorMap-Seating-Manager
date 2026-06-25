@@ -4,7 +4,7 @@ class RoomsController < ApplicationController
 
   def index
     authorize Room
-    @q = Room.ransack(params[:q])
+    @q = current_user.rooms.ransack(params[:q])
 
     @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
@@ -32,10 +32,11 @@ class RoomsController < ApplicationController
   def create
     authorize Room
     @room = Room.new(room_params)
+    @room.user_id = current_user.id
     if @room.save
       redirect_to rooms_path, status: :see_other
     else
-      @q = Room.ransack(params[:q])
+      @q = current_user.rooms.ransack(params[:q])
       @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
       render inertia: 'Rooms/Index', props: {
