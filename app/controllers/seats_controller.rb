@@ -30,14 +30,19 @@ class SeatsController < ApplicationController
         seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
       })
 
-      # 全ユーザーに通知を非同期で送信
-      BroadcastNotificationJob.perform_async(
-        @seat.room_id,
-        'check_in',
-        "#{params[:occupant_name]}さんがチェックインしました",
-        "座席 #{@seat.label} にチェックインしました",
-        { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => params[:occupant_name] }
-      )
+      # 全ユーザーに通知を非同期で送信（失敗してもレスポンスには影響しない）
+      begin
+        BroadcastNotificationJob.perform_async(
+          @seat.room_id,
+          'check_in',
+          "#{params[:occupant_name]}さんがチェックインしました",
+          "座席 #{@seat.label} にチェックインしました",
+          { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => params[:occupant_name] }
+        )
+      rescue => e
+        # Sidekiq job の失敗はログするが、レスポンスには影響しない
+        Rails.logger.error("BroadcastNotificationJob failed: #{e.message}")
+      end
 
       render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
     else
@@ -55,14 +60,19 @@ class SeatsController < ApplicationController
         seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
       })
 
-      # 全ユーザーに通知を非同期で送信
-      BroadcastNotificationJob.perform_async(
-        @seat.room_id,
-        'check_out',
-        "#{occupant_name}さんがチェックアウトしました",
-        "座席 #{@seat.label} からチェックアウトしました",
-        { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => occupant_name }
-      )
+      # 全ユーザーに通知を非同期で送信（失敗してもレスポンスには影響しない）
+      begin
+        BroadcastNotificationJob.perform_async(
+          @seat.room_id,
+          'check_out',
+          "#{occupant_name}さんがチェックアウトしました",
+          "座席 #{@seat.label} からチェックアウトしました",
+          { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => occupant_name }
+        )
+      rescue => e
+        # Sidekiq job の失敗はログするが、レスポンスには影響しない
+        Rails.logger.error("BroadcastNotificationJob failed: #{e.message}")
+      end
 
       render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
     else

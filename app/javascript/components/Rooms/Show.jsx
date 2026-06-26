@@ -51,6 +51,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
 
       // 着席している座席がある場合はチェックアウト
       if (currentSeat) {
+        console.log('Checking out from seat:', currentSeat)
         const checkOutResponse = await fetch(`/seats/${currentSeat.id}/check_out`, {
           method: 'POST',
           headers: {
@@ -59,8 +60,12 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
           }
         })
 
+        console.log('Check-out response:', { status: checkOutResponse.status, ok: checkOutResponse.ok })
+
         if (!checkOutResponse.ok) {
-          throw new Error('前の座席からのチェックアウトに失敗しました')
+          const errorData = await checkOutResponse.text()
+          console.error('Check-out error response:', errorData)
+          throw new Error(`前の座席からのチェックアウトに失敗しました (${checkOutResponse.status}): ${errorData}`)
         }
 
         // 前の座席をチェックアウト状態に更新
