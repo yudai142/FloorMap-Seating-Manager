@@ -127,9 +127,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
 
       if (!checkInResponse.ok) {
         const errorData = await checkInResponse.text()
-        console.error('Check-in error response:', errorData)
+        console.error('Check-in error response:', { status: checkInResponse.status, body: errorData })
         errorOccurred = true
-        errorMessage = `チェックインに失敗しました。もう一度お試しください。`
+        errorMessage = `チェックインに失敗しました (${checkInResponse.status})。サーバーログを確認してください。`
         throw new Error(errorMessage)
       }
 
