@@ -180,7 +180,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
       const payload = { room: { shapes_data: shapes } }
       console.log('📤 Sending payload:', payload)
 
-      const response = await fetch(`/rooms/${currentRoom.id}`, {
+      const response = await fetch(`/rooms/${currentRoom.token}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
@@ -217,9 +217,9 @@ export default function Canvas({ rooms, room, initialSeats }) {
     setIsUpdatingRoom(true)
     try {
       const payload = { room: { width: roomSizeInput.width, height: roomSizeInput.height } }
-      console.log('Updating room size:', { roomId: currentRoom.id, payload })
+      console.log('Updating room size:', { roomToken: currentRoom.token, payload })
 
-      const response = await fetch(`/rooms/${currentRoom.id}`, {
+      const response = await fetch(`/rooms/${currentRoom.token}`, {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

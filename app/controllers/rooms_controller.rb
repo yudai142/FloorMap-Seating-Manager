@@ -25,7 +25,8 @@ class RoomsController < ApplicationController
     authorize @room
     render inertia: 'Rooms/Show', props: {
       room: @room.as_json(only: %i[id name width height shapes_data token]),
-      seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name])
+      seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name]),
+      current_user: current_user&.as_json(only: %i[id name email])
     }
   end
 
@@ -55,10 +56,10 @@ class RoomsController < ApplicationController
 
   def update
     begin
-      @room = Room.find(params[:id])
+      @room = Room.find_by!(token: params[:token])
       authorize @room
       if @room.update(room_params)
-        render json: @room.as_json(only: %i[id name width height shapes_data]), status: :ok
+        render json: @room.as_json(only: %i[id name width height shapes_data token]), status: :ok
       else
         render json: { errors: @room.errors.messages }, status: :unprocessable_entity
       end

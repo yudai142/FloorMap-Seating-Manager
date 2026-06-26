@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react'
 import { subscribeToRoom } from '../../channels/room_channel'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 
-export default function RoomsShow({ room, seats: initialSeats }) {
+export default function RoomsShow({ room, seats: initialSeats, current_user }) {
   const [seats, setSeats] = useState(initialSeats)
   const [selectedSeat, setSelectedSeat] = useState(null)
   const [nameInput, setNameInput] = useState('')
@@ -26,9 +26,46 @@ export default function RoomsShow({ room, seats: initialSeats }) {
     if (seat.occupied) {
       handleCheckOut(seat)
     } else {
-      setSelectedSeat(seat)
-      setNameInput('')
-      setAlert(null)
+      if (current_user) {
+        // ログインユーザー：自動着席
+        handleCheckInWithName(seat, current_user.name)
+      } else {
+        // 非ログインユーザー：名前入力モーダルを表示
+        setSelectedSeat(seat)
+        setNameInput('')
+        setAlert(null)
+      }
+    }
+  }
+
+  const handleCheckInWithName = async (seat, name) => {
+    setCheckInLoading(true)
+    try {
+      const response = await fetch(`/seats/${seat.id}/check_in`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ occupant_name: name })
+      })
+
+      if (!response.ok) {
+        throw new Error(`エラー: ${response.status}`)
+      }
+
+      setSeats(prev => prev.map(s =>
+        s.id === seat.id
+          ? { ...s, occupied: true, occupant_name: name }
+          : s
+      ))
+      setAlert({ type: 'success', message: `${name}さんがチェックインしました` })
+      setTimeout(() => setAlert(null), 2000)
+    } catch (err) {
+      setAlert({ type: 'error', message: 'チェックインに失敗しました。もう一度お試しください。' })
+      console.error('Check-in error:', err)
+    } finally {
+      setCheckInLoading(false)
     }
   }
 
