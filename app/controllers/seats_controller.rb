@@ -30,13 +30,17 @@ class SeatsController < ApplicationController
       # 非ログインユーザーの場合、セッションに名前を保存
       session[:visitor_name] = check_in_params[:occupant_name] if current_user.nil?
 
-      # ブロードキャスト座席更新
-      ActionCable.server.broadcast("room_#{@seat.room_id}", {
-        type: 'seat_update',
-        seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
-      })
+      # ブロードキャスト座席更新（Redis が利用可能な場合のみ）
+      begin
+        ActionCable.server.broadcast("room_#{@seat.room_id}", {
+          type: 'seat_update',
+          seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
+        })
+      rescue => e
+        Rails.logger.error("ActionCable broadcast failed: #{e.message}")
+      end
 
-      # 全ユーザーに通知を非同期で送信（失敗してもレスポンスには影響しない）
+      # 全ユーザーに通知を非同期で送信（Sidekiq が利用可能な場合のみ）
       begin
         BroadcastNotificationJob.perform_async(
           @seat.room_id,
@@ -89,13 +93,17 @@ class SeatsController < ApplicationController
     end
 
     if @seat.update(occupied: false, occupant_name: nil, occupant_id: nil)
-      # ブロードキャスト座席更新
-      ActionCable.server.broadcast("room_#{@seat.room_id}", {
-        type: 'seat_update',
-        seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
-      })
+      # ブロードキャスト座席更新（Redis が利用可能な場合のみ）
+      begin
+        ActionCable.server.broadcast("room_#{@seat.room_id}", {
+          type: 'seat_update',
+          seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
+        })
+      rescue => e
+        Rails.logger.error("ActionCable broadcast failed: #{e.message}")
+      end
 
-      # 全ユーザーに通知を非同期で送信（失敗してもレスポンスには影響しない）
+      # 全ユーザーに通知を非同期で送信（Sidekiq が利用可能な場合のみ）
       begin
         BroadcastNotificationJob.perform_async(
           @seat.room_id,
