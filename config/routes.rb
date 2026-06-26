@@ -54,7 +54,8 @@ Rails.application.routes.draw do
   delete "two_factor/disable", to: "two_factor#disable", as: "two_factor_disable"
   
   get "users/settings", to: "users#settings", as: "user_settings"
-  
+  resources :users, only: [:update]
+
   resources :invitations, only: %i[index create destroy] do
     member do
       get :accept
