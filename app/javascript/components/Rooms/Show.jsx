@@ -105,11 +105,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
           throw new Error(errorMessage)
         }
 
-        // 前の座席をチェックアウト状態に更新
+        // レスポンスから保存されたシートデータを取得して更新
+        const checkOutSeatData = await checkOutResponse.json()
         setSeats(prev => prev.map(s =>
-          s.id === currentSeat.id
-            ? { ...s, occupied: false, occupant_name: null }
-            : s
+          s.id === checkOutSeatData.id ? checkOutSeatData : s
         ))
       }
 
@@ -133,11 +132,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         throw new Error(errorMessage)
       }
 
-      // 処理成功：UIを更新
+      // レスポンスから保存されたシートデータを取得して更新
+      const checkInSeatData = await checkInResponse.json()
       setSeats(prev => prev.map(s =>
-        s.id === seat.id
-          ? { ...s, occupied: true, occupant_name: name }
-          : s
+        s.id === checkInSeatData.id ? checkInSeatData : s
       ))
     } catch (err) {
       console.error('Check-in/move error caught:', err)
@@ -189,10 +187,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         throw new Error(errorMessage)
       }
 
+      // レスポンスから保存されたシートデータを取得して更新
+      const seatData = await response.json()
       setSeats(prev => prev.map(s =>
-        s.id === seat.id
-          ? { ...s, occupied: true, occupant_name: name }
-          : s
+        s.id === seatData.id ? seatData : s
       ))
       // 非ログインユーザーの場合、セッションの名前を更新
       if (!current_user) {
@@ -266,10 +264,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
           throw new Error(errorMessage)
         }
 
+        // レスポンスから保存されたシートデータを取得して更新
+        const seatData = await response.json()
         setSeats(prev => prev.map(s =>
-          s.id === selectedSeat.id
-            ? { ...s, occupied: true, occupant_name: nameInput }
-            : s
+          s.id === seatData.id ? seatData : s
         ))
         // 非ログインユーザーの場合、セッションの名前を更新
         if (!current_user) {
@@ -368,10 +366,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         throw new Error(errorMessage)
       }
 
+      // レスポンスから保存されたシートデータを取得して更新
+      const seatData = await response.json()
       setSeats(prev => prev.map(s =>
-        s.id === seat.id
-          ? { ...s, occupied: false, occupant_name: null }
-          : s
+        s.id === seatData.id ? seatData : s
       ))
     } catch (err) {
       console.error('Check-out error:', err)
