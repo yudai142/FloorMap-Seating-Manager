@@ -24,17 +24,83 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
 
   const handleSeatClick = (seat) => {
     if (seat.occupied) {
-      handleCheckOut(seat)
+      // 着席済み座席をクリック
+      if (current_user && seat.occupant_name === current_user.name) {
+        // 自分が着席している場合はチェックアウト
+        handleCheckOut(seat)
+      }
+      // 他のユーザーが着席している場合は何もしない
     } else {
       if (current_user) {
-        // ログインユーザー：自動着席
-        handleCheckInWithName(seat, current_user.name)
+        // ログインユーザー：自動着席（他の座席から移動する場合も対応）
+        handleCheckInWithMove(seat, current_user.name)
       } else {
         // 非ログインユーザー：名前入力モーダルを表示
         setSelectedSeat(seat)
         setNameInput('')
         setAlert(null)
       }
+    }
+  }
+
+  const handleCheckInWithMove = async (seat, name) => {
+    setCheckInLoading(true)
+    try {
+      // 現在のユーザーが他の座席に着席しているか確認
+      const currentSeat = seats.find(s => s.occupied && s.occupant_name === name)
+
+      // 着席している座席がある場合はチェックアウト
+      if (currentSeat) {
+        const checkOutResponse = await fetch(`/seats/${currentSeat.id}/check_out`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCsrfToken()
+          }
+        })
+
+        if (!checkOutResponse.ok) {
+          throw new Error('前の座席からのチェックアウトに失敗しました')
+        }
+
+        // 前の座席をチェックアウト状態に更新
+        setSeats(prev => prev.map(s =>
+          s.id === currentSeat.id
+            ? { ...s, occupied: false, occupant_name: null }
+            : s
+        ))
+      }
+
+      // 新しい座席にチェックイン
+      const checkInResponse = await fetch(`/seats/${seat.id}/check_in`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ occupant_name: name })
+      })
+
+      console.log('Check-in response:', { status: checkInResponse.status, ok: checkInResponse.ok })
+
+      if (!checkInResponse.ok) {
+        const errorData = await checkInResponse.text()
+        console.error('Check-in error response:', errorData)
+        throw new Error(`エラー: ${checkInResponse.status}`)
+      }
+
+      setSeats(prev => prev.map(s =>
+        s.id === seat.id
+          ? { ...s, occupied: true, occupant_name: name }
+          : s
+      ))
+      setAlert({ type: 'success', message: `${name}さんが座席 ${seat.label} に移動しました` })
+      setTimeout(() => setAlert(null), 2000)
+    } catch (err) {
+      console.error('Check-in/move error caught:', err)
+      setAlert({ type: 'error', message: err.message || 'チェックインに失敗しました。もう一度お試しください。' })
+    } finally {
+      setCheckInLoading(false)
     }
   }
 
