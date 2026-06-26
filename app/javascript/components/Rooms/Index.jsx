@@ -101,7 +101,7 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
             <div className="space-y-2">
               {rooms.map((room) => (
                 <div key={room.id} className="flex gap-3 items-center">
-                  <a href={`/rooms/${room.id}`}
+                  <a href={`/rooms/${room.token}`}
                      className="flex-1 bg-white border border-slate-200 rounded-lg px-4 py-3
                               shadow-sm hover:shadow-md transition-shadow
                               text-slate-800 hover:text-cyan-600">
@@ -112,7 +112,7 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
                       {room.width} × {room.height}
                     </span>
                   </a>
-                  <a href={`/editor?room_id=${room.id}`}
+                  <a href={`/editor?room_token=${room.token}`}
                      className="text-sm text-slate-500 hover:text-cyan-600 font-medium
                               border border-slate-300 rounded hover:border-cyan-400 transition-colors
                               px-4 py-2 whitespace-nowrap">

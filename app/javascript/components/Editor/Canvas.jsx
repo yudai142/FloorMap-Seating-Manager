@@ -267,8 +267,8 @@ export default function Canvas({ rooms, room, initialSeats }) {
   }
 
   const handleRoomChange = (e) => {
-    const newRoomId = e.target.value
-    router.visit(`/editor?room_id=${newRoomId}`, { preserveState: false })
+    const newRoomToken = e.target.value
+    router.visit(`/editor?room_token=${newRoomToken}`, { preserveState: false })
   }
 
   const handleCanvasClick = async (e) => {
@@ -741,14 +741,14 @@ export default function Canvas({ rooms, room, initialSeats }) {
           </label>
           <select
             id="room-select"
-            value={currentRoom?.id || ''}
+            value={currentRoom?.token || ''}
             onChange={handleRoomChange}
             disabled={isCreating || dragging || drawingStart || tool === 'delete'}
             className="px-3 py-2 border border-slate-300 rounded-lg
                      focus:outline-none focus:ring-2 focus:ring-cyan-400
                      disabled:bg-slate-100 disabled:text-slate-500">
             {rooms.map(r => (
-              <option key={r.id} value={r.id}>
+              <option key={r.id} value={r.token}>
                 {r.name} ({r.width}×{r.height})
               </option>
             ))}

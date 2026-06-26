@@ -9,7 +9,7 @@ class RoomsController < ApplicationController
     @rooms = @q.result.order(:created_at).page(params[:page]).per(20)
 
     render inertia: 'Rooms/Index', props: {
-      rooms: @rooms.as_json(only: %i[id name width height]),
+      rooms: @rooms.as_json(only: %i[id name width height token]),
       errors: [],
       can_create: policy(Room).create?,
       pagination: {
@@ -72,7 +72,7 @@ class RoomsController < ApplicationController
   private
 
   def set_room
-    @room = Room.find(params[:id])
+    @room = Room.find_by!(token: params[:token])
   end
 
   def room_params
