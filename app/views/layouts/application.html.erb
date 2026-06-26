@@ -21,19 +21,19 @@
 
     <%# Vite Assets %>
     <%
-      manifest_path = Rails.root.join('public/vite-dev/.vite/manifest.json')
+      vite_dir = Rails.env.production? ? 'vite' : 'vite-dev'
+      manifest_path = Rails.root.join("public/#{vite_dir}/.vite/manifest.json")
       manifest_content = File.read(manifest_path) rescue nil
       manifest = manifest_content ? JSON.parse(manifest_content) : {}
       app_manifest = manifest['entrypoints/application.jsx'] || {}
     %>
-    <!-- DEBUG: manifest_path=<%= manifest_path %> exists=<%= File.exist?(manifest_path) %> app_manifest=<%= app_manifest.inspect %> -->
     <% if app_manifest['css'] %>
       <% app_manifest['css'].each do |css_file| %>
-        <link rel="stylesheet" href="/vite-dev/<%= css_file %>">
+        <link rel="stylesheet" href="/<%= vite_dir %>/<%= css_file %>">
       <% end %>
     <% end %>
     <% if app_manifest['file'] %>
-      <script type="module" src="/vite-dev/<%= app_manifest['file'] %>"></script>
+      <script type="module" src="/<%= vite_dir %>/<%= app_manifest['file'] %>"></script>
     <% end %>
   </head>
 
