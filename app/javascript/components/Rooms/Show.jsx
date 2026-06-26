@@ -50,7 +50,11 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
         body: JSON.stringify({ occupant_name: name })
       })
 
+      console.log('Check-in response:', { status: response.status, ok: response.ok })
+
       if (!response.ok) {
+        const errorData = await response.text()
+        console.error('Check-in error response:', errorData)
         throw new Error(`エラー: ${response.status}`)
       }
 
@@ -62,8 +66,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
       setAlert({ type: 'success', message: `${name}さんがチェックインしました` })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
+      console.error('Check-in error caught:', err)
       setAlert({ type: 'error', message: 'チェックインに失敗しました。もう一度お試しください。' })
-      console.error('Check-in error:', err)
     } finally {
       setCheckInLoading(false)
     }

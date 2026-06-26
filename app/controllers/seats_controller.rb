@@ -36,7 +36,7 @@ class SeatsController < ApplicationController
         'check_in',
         "#{params[:occupant_name]}さんがチェックインしました",
         "座席 #{@seat.label} にチェックインしました",
-        { seat_id: @seat.id, seat_label: @seat.label, occupant_name: params[:occupant_name] }
+        { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => params[:occupant_name] }
       )
 
       render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
@@ -61,7 +61,7 @@ class SeatsController < ApplicationController
         'check_out',
         "#{occupant_name}さんがチェックアウトしました",
         "座席 #{@seat.label} からチェックアウトしました",
-        { seat_id: @seat.id, seat_label: @seat.label, occupant_name: occupant_name }
+        { 'seat_id' => @seat.id, 'seat_label' => @seat.label, 'occupant_name' => occupant_name }
       )
 
       render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
