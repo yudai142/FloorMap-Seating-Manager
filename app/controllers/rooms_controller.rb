@@ -24,7 +24,7 @@ class RoomsController < ApplicationController
   def show
     authorize @room
     render inertia: 'Rooms/Show', props: {
-      room: @room.as_json(only: %i[id name width height shapes_data]),
+      room: @room.as_json(only: %i[id name width height shapes_data token]),
       seats: @room.seats.as_json(only: %i[id x y label occupied occupant_name])
     }
   end
