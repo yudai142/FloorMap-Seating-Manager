@@ -88,7 +88,7 @@ class SeatsController < ApplicationController
   private
 
   def set_room
-    @room = current_user.rooms.find(params[:room_id])
+    @room = current_user.rooms.find_by!(token: params[:room_token])
   rescue ActiveRecord::RecordNotFound
     render json: { error: '上面図が見つかりません' }, status: :not_found
   end

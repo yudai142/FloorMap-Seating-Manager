@@ -600,7 +600,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   const handleDeleteSeat = async (seat) => {
     try {
-      const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
+      const response = await fetch(`/rooms/${currentRoom.token}/seats/${seat.id}`, {
         method: 'DELETE',
         headers: {
           'X-CSRF-Token': getCsrfToken()
@@ -675,7 +675,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
       const seat = seats.find(s => s.id === dragging.id)
       if (seat) {
         try {
-          const response = await fetch(`/rooms/${currentRoom.id}/seats/${seat.id}`, {
+          const response = await fetch(`/rooms/${currentRoom.token}/seats/${seat.id}`, {
             method: 'PATCH',
             headers: {
               'Content-Type': 'application/json',
