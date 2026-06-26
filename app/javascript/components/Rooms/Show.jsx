@@ -146,7 +146,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         errorMessage = err.message || 'チェックインに失敗しました。もう一度お試しください。'
       }
     } finally {
-      // 処理完了：スピナーを止める
+      // 3秒待機してからスピナーを止める
+      await new Promise(resolve => setTimeout(resolve, 3000))
       setCheckInLoading(false)
 
       // 処理完了後にアラートを表示
@@ -205,7 +206,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         errorMessage = err.message || 'チェックインに失敗しました。もう一度お試しください。'
       }
     } finally {
-      // 処理完了：スピナーを止める
+      // 3秒待機してからスピナーを止める
+      await new Promise(resolve => setTimeout(resolve, 3000))
       setCheckInLoading(false)
 
       // 処理完了後にアラートを表示
@@ -284,7 +286,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         errorMessage = 'エラーが発生しました。もう一度お試しください。'
       }
     } finally {
-      // 処理完了：スピナーを止める
+      // 3秒待機してからスピナーを止める
+      await new Promise(resolve => setTimeout(resolve, 3000))
       setCheckInLoading(false)
 
       // 処理完了後にアラートを表示
@@ -330,7 +333,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         errorMessage = '権限剥奪に失敗しました。もう一度お試しください。'
       }
     } finally {
-      // 処理完了：スピナーを止める
+      // 3秒待機してからスピナーを止める
+      await new Promise(resolve => setTimeout(resolve, 3000))
       setCheckInLoading(false)
       setRevokePermissionUser(null)
 
@@ -376,7 +380,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         errorMessage = 'チェックアウトに失敗しました。もう一度お試しください。'
       }
     } finally {
-      // 処理完了：スピナーを止める
+      // 3秒待機してからスピナーを止める
+      await new Promise(resolve => setTimeout(resolve, 3000))
       setCheckInLoading(false)
 
       // 処理完了後にアラートを表示
