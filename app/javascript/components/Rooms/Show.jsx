@@ -223,9 +223,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
           <p className="text-slate-500 text-sm mt-1">{room.width} × {room.height}</p>
         </div>
 
-        <div className="mb-4 min-h-12">
-          {alert && (
-            alert.type === 'error' ? (
+        {alert && (
+          <div className="fixed top-4 left-4 right-4 z-50 max-w-md">
+            {alert.type === 'error' ? (
               <ErrorAlert
                 message={alert.message}
                 onDismiss={() => setAlert(null)}
@@ -235,9 +235,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
                 message={alert.message}
                 onDismiss={() => setAlert(null)}
               />
-            )
-          )}
-        </div>
+            )}
+          </div>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* SVGキャンバス */}
