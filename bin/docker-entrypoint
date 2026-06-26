@@ -3,7 +3,11 @@
 # If running the rails server then create or migrate existing database
 if [ "${@: -2:1}" == "./bin/rails" ] && [ "${@: -1:1}" == "server" ]; then
   if [ -n "$DATABASE_URL" ]; then
+    echo "Preparing database..."
     ./bin/rails db:prepare
+    echo "Database preparation completed"
+  else
+    echo "Warning: DATABASE_URL is not set. Skipping database preparation."
   fi
 fi
 

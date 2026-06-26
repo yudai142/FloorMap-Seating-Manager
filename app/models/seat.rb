@@ -1,5 +1,6 @@
 class Seat < ApplicationRecord
   belongs_to :room
+  belongs_to :occupant, class_name: 'User', optional: true, foreign_key: :occupant_id
 
   has_paper_trail
   validates :label, presence: true
