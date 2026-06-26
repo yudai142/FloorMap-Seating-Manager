@@ -21,9 +21,22 @@
 
     <%# Vite Assets %>
     <%
-      vite_dir = Rails.env.production? ? 'vite' : 'vite-dev'
-      manifest_path = Rails.root.join("public/#{vite_dir}/.vite/manifest.json")
-      manifest_content = File.read(manifest_path) rescue nil
+      # Try multiple possible manifest paths in order of preference
+      vite_paths = [
+        Rails.root.join('public/vite/.vite/manifest.json'),
+        Rails.root.join('public/vite-prod/.vite/manifest.json'),
+        Rails.root.join('public/vite-dev/.vite/manifest.json')
+      ]
+
+      manifest_path = vite_paths.find { |p| File.exist?(p) }
+      vite_dir = if manifest_path
+                   manifest_path.to_s.include?('vite-prod') ? 'vite-prod' :
+                   manifest_path.to_s.include?('vite-dev') ? 'vite-dev' : 'vite'
+                 else
+                   Rails.env.production? ? 'vite-prod' : 'vite-dev'
+                 end
+
+      manifest_content = manifest_path && File.read(manifest_path) rescue nil
       manifest = manifest_content ? JSON.parse(manifest_content) : {}
       app_manifest = manifest['entrypoints/application.jsx'] || {}
     %>

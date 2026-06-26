@@ -41,8 +41,8 @@ RUN gem install bundler:4.0.13 && \
 # Copy application code
 COPY . .
 
-# Install JavaScript dependencies
-RUN npm ci
+# Install JavaScript dependencies (remove lock file to work around npm optional dependencies bug)
+RUN rm -f package-lock.json && npm install
 
 # Build Vite assets
 RUN npm run build
