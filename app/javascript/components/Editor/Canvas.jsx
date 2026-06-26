@@ -426,7 +426,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
     setIsCreating(true)
     try {
-      const response = await fetch(`/rooms/${currentRoom.id}/seats`, {
+      const response = await fetch(`/rooms/${currentRoom.token}/seats`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
