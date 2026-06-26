@@ -99,7 +99,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
           ? { ...s, occupied: true, occupant_name: name }
           : s
       ))
-      setAlert({ type: 'success', message: `${name}さんが座席 ${seat.label} に移動しました` })
+      const message = currentSeat
+        ? `${name}さんが座席 ${seat.label} に移動しました`
+        : `${name}さんが座席 ${seat.label} に着席しました`
+      setAlert({ type: 'success', message })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
       console.error('Check-in/move error caught:', err)
