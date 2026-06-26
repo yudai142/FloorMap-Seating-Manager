@@ -1,5 +1,5 @@
 class SeatsController < ApplicationController
-  before_action :authenticate_user!
+  before_action :authenticate_user!, only: [:create, :update, :destroy]
   before_action :set_room, only: [:create]
   before_action :set_seat, only: [:update, :check_in, :check_out, :destroy]
 
@@ -23,7 +23,13 @@ class SeatsController < ApplicationController
 
   def check_in
     @seat = Seat.find(params[:id])
-    if @seat.update(occupied: true, occupant_name: check_in_params[:occupant_name])
+    update_attrs = { occupied: true, occupant_name: check_in_params[:occupant_name] }
+    update_attrs[:occupant_id] = current_user.id if current_user
+
+    if @seat.update(update_attrs)
+      # 非ログインユーザーの場合、セッションに名前を保存
+      session[:visitor_name] = check_in_params[:occupant_name] if current_user.nil?
+
       # ブロードキャスト座席更新
       ActionCable.server.broadcast("room_#{@seat.room_id}", {
         type: 'seat_update',
@@ -53,7 +59,36 @@ class SeatsController < ApplicationController
   def check_out
     @seat = Seat.find(params[:id])
     occupant_name = @seat.occupant_name
-    if @seat.update(occupied: false, occupant_name: nil)
+    is_force_checkout = params[:force_checkout].present?
+
+    # 権限チェック
+    if is_force_checkout
+      # 強制離席：ルーム作成者または権限を持つユーザーのみ可能
+      is_room_creator = current_user&.id == @seat.room.user_id
+      is_permitted = current_user && @seat.room.room_permissions.exists?(user_id: current_user.id)
+
+      unless is_room_creator || is_permitted
+        render json: { error: '権限がありません' }, status: :forbidden
+        return
+      end
+    else
+      # 通常の離席：自分が着席している座席のみ離席可能
+      if current_user
+        # ログインユーザー：自分の名前で着席している座席のみ離席可能
+        unless @seat.occupant_name == current_user.name
+          render json: { error: '権限がありません' }, status: :forbidden
+          return
+        end
+      else
+        # 非ログインユーザー：セッションの名前と一致する座席のみ離席可能
+        unless @seat.occupant_name == session[:visitor_name]
+          render json: { error: '権限がありません' }, status: :forbidden
+          return
+        end
+      end
+    end
+
+    if @seat.update(occupied: false, occupant_name: nil, occupant_id: nil)
       # ブロードキャスト座席更新
       ActionCable.server.broadcast("room_#{@seat.room_id}", {
         type: 'seat_update',
@@ -95,8 +130,11 @@ class SeatsController < ApplicationController
 
   def set_seat
     @seat = Seat.find(params[:id])
-    unless @seat.room.user_id == current_user.id
-      render json: { error: '権限がありません' }, status: :forbidden
+    # check_in と check_out は非ログインユーザーもアクセス可能
+    unless %w[check_in check_out].include?(action_name)
+      unless current_user&.id == @seat.room.user_id
+        render json: { error: '権限がありません' }, status: :forbidden
+      end
     end
   rescue ActiveRecord::RecordNotFound
     render json: { error: '座席が見つかりません' }, status: :not_found

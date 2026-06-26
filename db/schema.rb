@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_26_000003) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_26_000005) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
 
@@ -98,6 +98,16 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_000003) do
     t.index ["user_id"], name: "index_notifications_on_user_id"
   end
 
+  create_table "room_permissions", force: :cascade do |t|
+    t.datetime "created_at", null: false
+    t.bigint "room_id", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id", null: false
+    t.index ["room_id", "user_id"], name: "index_room_permissions_on_room_id_and_user_id", unique: true
+    t.index ["room_id"], name: "index_room_permissions_on_room_id"
+    t.index ["user_id"], name: "index_room_permissions_on_user_id"
+  end
+
   create_table "rooms", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.integer "height", default: 0, null: false
@@ -114,6 +124,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_000003) do
   create_table "seats", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.string "label", null: false
+    t.integer "occupant_id"
     t.string "occupant_name"
     t.boolean "occupied", default: false, null: false
     t.bigint "room_id", null: false
@@ -160,6 +171,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_26_000003) do
   add_foreign_key "invitations", "users", column: "invited_by_id"
   add_foreign_key "notification_preferences", "users"
   add_foreign_key "notifications", "users"
+  add_foreign_key "room_permissions", "rooms"
+  add_foreign_key "room_permissions", "users"
   add_foreign_key "rooms", "users"
   add_foreign_key "seats", "rooms"
+  add_foreign_key "seats", "users", column: "occupant_id", on_delete: :nullify
 end

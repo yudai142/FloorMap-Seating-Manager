@@ -1,8 +1,9 @@
 import React, { useState, useRef, useEffect } from 'react'
 import { router } from '@inertiajs/react'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
+import Header from '../Header'
 
-export default function Canvas({ rooms, room, initialSeats }) {
+export default function Canvas({ rooms, room, initialSeats, current_user }) {
   const [currentRoom, setCurrentRoom] = useState(room)
   const [seats, setSeats] = useState(initialSeats || [])
   const [shapes, setShapes] = useState([])
@@ -712,6 +713,7 @@ export default function Canvas({ rooms, room, initialSeats }) {
 
   return (
     <div className="min-h-screen bg-slate-50 flex flex-col">
+      <Header currentUser={current_user} />
       <div className="max-w-6xl mx-auto px-4 py-8 w-full">
         <div className="mb-8">
           <a href="/" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium mb-2 inline-block">

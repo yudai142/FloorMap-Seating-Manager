@@ -1,14 +1,24 @@
 import React, { useState, useEffect } from 'react'
+import { TransformWrapper, TransformComponent } from 'react-zoom-pan-pinch'
 import { subscribeToRoom } from '../../channels/room_channel'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
+import Header from '../Header'
 
-export default function RoomsShow({ room, seats: initialSeats, current_user }) {
+export default function RoomsShow({ room, seats: initialSeats, current_user, visitor_name, is_room_creator: initialIsRoomCreator, has_permission: initialHasPermission, permitted_users: initialPermittedUsers }) {
   const [seats, setSeats] = useState(initialSeats)
   const [selectedSeat, setSelectedSeat] = useState(null)
   const [nameInput, setNameInput] = useState('')
   const [alert, setAlert] = useState(null)
   const [checkInLoading, setCheckInLoading] = useState(false)
   const [copied, setCopied] = useState(false)
+  const [visitorName, setVisitorName] = useState(visitor_name || '')
+  const [confirmCheckOut, setConfirmCheckOut] = useState(null)
+  const [permittedUsers, setPermittedUsers] = useState(initialPermittedUsers || [])
+  const [revokePermissionUser, setRevokePermissionUser] = useState(null)
+
+  const isRoomCreator = initialIsRoomCreator
+  const hasPermission = initialHasPermission
+  const canForceCheckout = isRoomCreator || hasPermission
 
   const getCsrfToken = () => {
     return document.querySelector('meta[name="csrf-token"]').content
@@ -37,17 +47,26 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
   const handleSeatClick = (seat) => {
     if (seat.occupied) {
       // 着席済み座席をクリック
-      if (current_user && seat.occupant_name === current_user.name) {
+      const isOwnSeat = (current_user && seat.occupant_name === current_user.name) ||
+                        (!current_user && visitorName && seat.occupant_name === visitorName)
+
+      if (isOwnSeat) {
         // 自分が着席している場合はチェックアウト
         handleCheckOut(seat)
+      } else if (canForceCheckout) {
+        // ルーム作成者または権限を持つユーザーが他の人の座席をクリック：確認モーダルを表示
+        setConfirmCheckOut(seat)
       }
-      // 他のユーザーが着席している場合は何もしない
+      // 他の人の座席かつルーム作成者でない場合は何もしない
     } else {
       if (current_user) {
         // ログインユーザー：自動着席（他の座席から移動する場合も対応）
         handleCheckInWithMove(seat, current_user.name)
+      } else if (visitorName) {
+        // 非ログインユーザーでセッションに名前がある場合：自動着席
+        handleCheckInWithMove(seat, visitorName)
       } else {
-        // 非ログインユーザー：名前入力モーダルを表示
+        // 非ログインユーザーでセッションに名前がない場合：名前入力モーダルを表示
         setSelectedSeat(seat)
         setNameInput('')
         setAlert(null)
@@ -149,8 +168,13 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
           ? { ...s, occupied: true, occupant_name: name }
           : s
       ))
+      // 非ログインユーザーの場合、セッションの名前を更新
+      if (!current_user) {
+        setVisitorName(name)
+      }
       setAlert({ type: 'success', message: `${name}さんがチェックインしました` })
       setTimeout(() => setAlert(null), 2000)
+      setSelectedSeat(null)
     } catch (err) {
       console.error('Check-in error caught:', err)
       setAlert({ type: 'error', message: 'チェックインに失敗しました。もう一度お試しください。' })
@@ -167,31 +191,56 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
 
     setCheckInLoading(true)
     try {
-      const response = await fetch(`/seats/${selectedSeat.id}/check_in`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': getCsrfToken()
-        },
-        body: JSON.stringify({ occupant_name: nameInput })
-      })
+      // 名前変更の場合
+      if (selectedSeat.id === -1) {
+        const response = await fetch(`/rooms/${room.token}/update_visitor_name`, {
+          method: 'PATCH',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCsrfToken()
+          },
+          body: JSON.stringify({ visitor_name: nameInput })
+        })
 
-      if (!response.ok) {
-        throw new Error(`エラー: ${response.status}`)
+        if (!response.ok) {
+          throw new Error(`エラー: ${response.status}`)
+        }
+
+        setVisitorName(nameInput)
+        setAlert({ type: 'success', message: `名前を${nameInput}さんに変更しました` })
+      } else {
+        // 通常のチェックイン
+        const response = await fetch(`/seats/${selectedSeat.id}/check_in`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': getCsrfToken()
+          },
+          body: JSON.stringify({ occupant_name: nameInput })
+        })
+
+        if (!response.ok) {
+          throw new Error(`エラー: ${response.status}`)
+        }
+
+        setSeats(prev => prev.map(s =>
+          s.id === selectedSeat.id
+            ? { ...s, occupied: true, occupant_name: nameInput }
+            : s
+        ))
+        // 非ログインユーザーの場合、セッションの名前を更新
+        if (!current_user) {
+          setVisitorName(nameInput)
+        }
+        setAlert({ type: 'success', message: `${nameInput}さんがチェックインしました` })
       }
 
-      setSeats(prev => prev.map(s =>
-        s.id === selectedSeat.id
-          ? { ...s, occupied: true, occupant_name: nameInput }
-          : s
-      ))
-      setAlert({ type: 'success', message: `${nameInput}さんがチェックインしました` })
       setSelectedSeat(null)
       setNameInput('')
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      setAlert({ type: 'error', message: 'チェックインに失敗しました。もう一度お試しください。' })
-      console.error('Check-in error:', err)
+      setAlert({ type: 'error', message: 'エラーが発生しました。もう一度お試しください。' })
+      console.error('Error:', err)
     } finally {
       setCheckInLoading(false)
     }
@@ -226,6 +275,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Header currentUser={current_user} />
       <div className="max-w-6xl mx-auto px-4 py-8">
         <div className="mb-8">
           <a href="/" className="text-cyan-600 hover:text-cyan-700 text-sm font-medium mb-2 inline-block">
@@ -267,12 +317,24 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
                       <span className="text-sm text-slate-600">着席中</span>
                     </div>
                   </div>
-                  <svg
-                    width={Math.min(room.width, 500)}
-                    height={Math.min(room.height, 400)}
-                    className="border border-slate-300 rounded-lg bg-slate-50"
-                    viewBox={`0 0 ${room.width} ${room.height}`}
-                  >
+                  <div className="border border-slate-300 rounded-lg bg-slate-50 overflow-hidden" style={{ maxHeight: '400px', maxWidth: '500px' }}>
+                    <TransformWrapper
+                      initialScale={1}
+                      initialPositionX={0}
+                      initialPositionY={0}
+                      minScale={0.5}
+                      maxScale={3}
+                      panning={{ disabled: false }}
+                      pinch={{ disabled: false }}
+                      wheel={{ disabled: false }}
+                    >
+                      <TransformComponent>
+                        <svg
+                          width={Math.min(room.width, 500)}
+                          height={Math.min(room.height, 400)}
+                          viewBox={`0 0 ${room.width} ${room.height}`}
+                          style={{ touchAction: 'none' }}
+                        >
                     {room.shapes_data && Array.isArray(room.shapes_data) && room.shapes_data.map((shape) => {
                       if (shape.type === 'line') {
                         return (
@@ -395,7 +457,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
                         )}
                       </g>
                     ))}
-                  </svg>
+                        </svg>
+                      </TransformComponent>
+                    </TransformWrapper>
+                  </div>
                 </div>
               ) : (
                 <div className="text-slate-500 py-12 text-center">
@@ -421,7 +486,35 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
                   }`}>
                   {copied ? '✓ コピーしました' : '🔗 URLをコピー'}
                 </button>
+                {!current_user && visitorName && (
+                  <button
+                    onClick={() => {
+                      setSelectedSeat(null)
+                      setNameInput(visitorName)
+                      setTimeout(() => setSelectedSeat({ id: -1, label: '名前変更' }), 0)
+                    }}
+                    className="px-3 py-2 bg-purple-500 text-white text-sm rounded font-medium hover:bg-purple-600 transition-colors">
+                    ✏️ 名前を変更
+                  </button>
+                )}
               </div>
+              {permittedUsers && permittedUsers.length > 0 && (
+                <div className="mb-6 pb-6 border-b border-slate-200">
+                  <h3 className="text-sm font-semibold text-slate-600 mb-3">権限ユーザー</h3>
+                  <div className="space-y-2">
+                    {permittedUsers.map((user) => (
+                      <div
+                        key={user.id}
+                        onClick={() => isRoomCreator && setRevokePermissionUser(user)}
+                        className={`p-2 rounded bg-blue-50 border border-blue-200 ${isRoomCreator ? 'cursor-pointer hover:bg-blue-100 transition-colors' : ''}`}
+                      >
+                        <div className="text-sm font-medium text-slate-800">{user.name}</div>
+                        <div className="text-xs text-slate-500">{user.email}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
               <h2 className="text-lg font-semibold text-slate-800 mb-4">座席一覧</h2>
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {seats.map((s) => (
@@ -451,9 +544,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full"
             onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-slate-800 mb-1">
-              {selectedSeat.label} にチェックイン
+              {selectedSeat.id === -1 ? '名前を変更' : `${selectedSeat.label} にチェックイン`}
             </h2>
-            <p className="text-sm text-slate-500 mb-4">お名前を入力してください</p>
+            <p className="text-sm text-slate-500 mb-4">{selectedSeat.id === -1 ? '新しい名前を入力してください' : 'お名前を入力してください'}</p>
 
             {alert && (
               alert.type === 'error' ? (
@@ -491,13 +584,193 @@ export default function RoomsShow({ room, seats: initialSeats, current_user }) {
                 {checkInLoading && (
                   <span className="inline-block animate-spin">⟳</span>
                 )}
-                {checkInLoading ? 'チェックイン中...' : 'チェックイン'}
+                {checkInLoading ? (selectedSeat.id === -1 ? '変更中...' : 'チェックイン中...') : (selectedSeat.id === -1 ? '変更' : 'チェックイン')}
               </button>
               <button
                 onClick={() => setSelectedSeat(null)}
                 disabled={checkInLoading}
                 className="flex-1 py-2 bg-slate-200 text-slate-700 font-medium rounded-lg
                          hover:bg-slate-300 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 確認モーダル：他の人の座席を離席させるか権限を与えるか */}
+      {confirmCheckOut && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setConfirmCheckOut(null)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              {confirmCheckOut.label} から {confirmCheckOut.occupant_name} さんに対して
+            </h2>
+            <p className="text-sm text-slate-600 mb-6">
+              どの操作を実行しますか？
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/seats/${confirmCheckOut.id}/check_out`, {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfToken()
+                      },
+                      body: JSON.stringify({ force_checkout: true })
+                    })
+
+                    if (!response.ok) {
+                      throw new Error(`エラー: ${response.status}`)
+                    }
+
+                    setSeats(prev => prev.map(s =>
+                      s.id === confirmCheckOut.id
+                        ? { ...s, occupied: false, occupant_name: null, occupant_id: null }
+                        : s
+                    ))
+                    setAlert({ type: 'success', message: `${confirmCheckOut.occupant_name}さんを離席させました` })
+                    setTimeout(() => setAlert(null), 2000)
+                  } catch (err) {
+                    setAlert({ type: 'error', message: '離席操作に失敗しました' })
+                    console.error('Force check-out error:', err)
+                  } finally {
+                    setConfirmCheckOut(null)
+                  }
+                }}
+                className="py-2 bg-red-500 text-white font-medium rounded-lg
+                         hover:bg-red-600 transition-colors">
+                離席させる
+              </button>
+              {isRoomCreator && confirmCheckOut.occupant_id && (
+                permittedUsers.some(u => u.id === confirmCheckOut.occupant_id) ? (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/rooms/${room.token}/revoke_permission`, {
+                          method: 'DELETE',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': getCsrfToken()
+                          },
+                          body: JSON.stringify({ user_id: confirmCheckOut.occupant_id })
+                        })
+
+                        if (!response.ok) {
+                          throw new Error(`エラー: ${response.status}`)
+                        }
+
+                        setPermittedUsers(prev => prev.filter(u => u.id !== confirmCheckOut.occupant_id))
+                        setAlert({ type: 'success', message: `${confirmCheckOut.occupant_name}さんの権限を剥奪しました` })
+                        setTimeout(() => setAlert(null), 2000)
+                      } catch (err) {
+                        setAlert({ type: 'error', message: '権限剥奪に失敗しました' })
+                        console.error('Revoke permission error:', err)
+                      } finally {
+                        setConfirmCheckOut(null)
+                      }
+                    }}
+                    className="py-2 bg-orange-500 text-white font-medium rounded-lg
+                             hover:bg-orange-600 transition-colors">
+                    権限を剥奪
+                  </button>
+                ) : (
+                  <button
+                    onClick={async () => {
+                      try {
+                        const response = await fetch(`/rooms/${room.token}/grant_permission`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRF-Token': getCsrfToken()
+                          },
+                          body: JSON.stringify({ user_id: confirmCheckOut.occupant_id })
+                        })
+
+                        if (!response.ok) {
+                          throw new Error(`エラー: ${response.status}`)
+                        }
+
+                        const user = current_user && current_user.id === confirmCheckOut.occupant_id
+                          ? current_user
+                          : { id: confirmCheckOut.occupant_id, name: confirmCheckOut.occupant_name, email: '' }
+                        setPermittedUsers(prev => [...prev, { id: confirmCheckOut.occupant_id, name: confirmCheckOut.occupant_name, email: '' }])
+                        setAlert({ type: 'success', message: `${confirmCheckOut.occupant_name}さんに権限を付与しました` })
+                        setTimeout(() => setAlert(null), 2000)
+                      } catch (err) {
+                        setAlert({ type: 'error', message: '権限付与に失敗しました' })
+                        console.error('Grant permission error:', err)
+                      } finally {
+                        setConfirmCheckOut(null)
+                      }
+                    }}
+                    className="py-2 bg-blue-500 text-white font-medium rounded-lg
+                             hover:bg-blue-600 transition-colors">
+                    権限を与える
+                  </button>
+                )
+              )}
+              <button
+                onClick={() => setConfirmCheckOut(null)}
+                className="py-2 bg-slate-200 text-slate-700 font-medium rounded-lg
+                         hover:bg-slate-300 transition-colors">
+                キャンセル
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 権限剥奪確認モーダル */}
+      {revokePermissionUser && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
+          onClick={() => setRevokePermissionUser(null)}>
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full"
+            onClick={(e) => e.stopPropagation()}>
+            <h2 className="text-lg font-semibold text-slate-800 mb-4">
+              権限を剥奪しますか？
+            </h2>
+            <p className="text-sm text-slate-600 mb-6">
+              <span className="font-medium">{revokePermissionUser.name}</span> さんの権限を剥奪します。この操作は取り消せません。
+            </p>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={async () => {
+                  try {
+                    const response = await fetch(`/rooms/${room.token}/revoke_permission`, {
+                      method: 'DELETE',
+                      headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-Token': getCsrfToken()
+                      },
+                      body: JSON.stringify({ user_id: revokePermissionUser.id })
+                    })
+
+                    if (!response.ok) {
+                      throw new Error(`エラー: ${response.status}`)
+                    }
+
+                    setPermittedUsers(prev => prev.filter(u => u.id !== revokePermissionUser.id))
+                    setAlert({ type: 'success', message: `${revokePermissionUser.name}さんの権限を剥奪しました` })
+                    setTimeout(() => setAlert(null), 2000)
+                  } catch (err) {
+                    setAlert({ type: 'error', message: '権限剥奪に失敗しました' })
+                    console.error('Revoke permission error:', err)
+                  } finally {
+                    setRevokePermissionUser(null)
+                  }
+                }}
+                className="py-2 bg-red-500 text-white font-medium rounded-lg
+                         hover:bg-red-600 transition-colors">
+                権限を剥奪
+              </button>
+              <button
+                onClick={() => setRevokePermissionUser(null)}
+                className="py-2 bg-slate-200 text-slate-700 font-medium rounded-lg
+                         hover:bg-slate-300 transition-colors">
                 キャンセル
               </button>
             </div>

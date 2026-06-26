@@ -2,8 +2,9 @@ import React, { useState } from 'react'
 import { useForm, router } from '@inertiajs/react'
 import { ErrorAlert, SuccessAlert } from '../ui/Alert'
 import Pagination from '../ui/Pagination'
+import Header from '../Header'
 
-export default function RoomsIndex({ rooms, errors: serverErrors, pagination, search_query }) {
+export default function RoomsIndex({ rooms, errors: serverErrors, pagination, search_query, current_user }) {
   const [showForm, setShowForm] = useState(false)
   const [alert, setAlert] = useState(null)
   const { data, setData, post, processing } = useForm({
@@ -51,6 +52,7 @@ export default function RoomsIndex({ rooms, errors: serverErrors, pagination, se
 
   return (
     <div className="min-h-screen bg-slate-50">
+      <Header currentUser={current_user} />
       <div className="max-w-4xl mx-auto px-4 py-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-slate-800 mb-2">上面図管理</h1>

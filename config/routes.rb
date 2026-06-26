@@ -10,7 +10,14 @@ Rails.application.routes.draw do
     resources :seats, only: %i[create update destroy] do
       collection { get :export_csv }
     end
-    collection { get :export_csv }
+    member do
+      post :grant_permission
+      delete :revoke_permission
+    end
+    collection do
+      get :export_csv
+      patch :update_visitor_name
+    end
   end
 
   root to: 'rooms#index'
