@@ -303,7 +303,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 lg:gap-6">
           {/* SVGキャンバス */}
-          <div className="lg:col-span-3 order-2 lg:order-1">
+          <div className="lg:col-span-3">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               {room.width > 0 && room.height > 0 ? (
                 <div>
@@ -471,7 +471,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
           </div>
 
           {/* 座席リスト */}
-          <div className="lg:col-span-1 order-1 lg:order-2">
+          <div className="lg:col-span-1">
             <div className="bg-white rounded-lg border border-slate-200 shadow-sm p-6">
               <div className="flex flex-col gap-2 mb-4">
                 <a href={`/rooms/${room.token}/seats/export_csv`} download className="px-3 py-2 bg-blue-500 text-white text-sm rounded font-medium hover:bg-blue-600 transition-colors text-center">
