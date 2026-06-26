@@ -76,6 +76,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
 
   const handleCheckInWithMove = async (seat, name) => {
     setCheckInLoading(true)
+    setAlert(null)
+    let errorOccurred = false
+    let errorMessage = ''
+
     try {
       // 現在のユーザーが他の座席に着席しているか確認
       const currentSeat = seats.find(s => s.occupied && s.occupant_name === name)
@@ -96,7 +100,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         if (!checkOutResponse.ok) {
           const errorData = await checkOutResponse.text()
           console.error('Check-out error response:', errorData)
-          throw new Error(`前の座席からのチェックアウトに失敗しました (${checkOutResponse.status}): ${errorData}`)
+          errorOccurred = true
+          errorMessage = `前の座席からのチェックアウトに失敗しました (${checkOutResponse.status})`
+          throw new Error(errorMessage)
         }
 
         // 前の座席をチェックアウト状態に更新
@@ -122,29 +128,46 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       if (!checkInResponse.ok) {
         const errorData = await checkInResponse.text()
         console.error('Check-in error response:', errorData)
-        throw new Error(`エラー: ${checkInResponse.status}`)
+        errorOccurred = true
+        errorMessage = `チェックインに失敗しました。もう一度お試しください。`
+        throw new Error(errorMessage)
       }
 
+      // 処理成功：UIを更新
       setSeats(prev => prev.map(s =>
         s.id === seat.id
           ? { ...s, occupied: true, occupant_name: name }
           : s
       ))
-      const message = currentSeat
-        ? `${name}さんが座席 ${seat.label} に移動しました`
-        : `${name}さんが座席 ${seat.label} に着席しました`
-      setAlert({ type: 'success', message })
-      setTimeout(() => setAlert(null), 2000)
     } catch (err) {
       console.error('Check-in/move error caught:', err)
-      setAlert({ type: 'error', message: err.message || 'チェックインに失敗しました。もう一度お試しください。' })
+      errorOccurred = true
+      if (!errorMessage) {
+        errorMessage = err.message || 'チェックインに失敗しました。もう一度お試しください。'
+      }
     } finally {
+      // 処理完了：スピナーを止める
       setCheckInLoading(false)
+
+      // 処理完了後にアラートを表示
+      if (errorOccurred) {
+        setAlert({ type: 'error', message: errorMessage })
+      } else {
+        const currentSeat = seats.find(s => s.occupied && s.occupant_name === name)
+        const message = currentSeat && currentSeat.id !== seat.id
+          ? `${name}さんが座席 ${seat.label} に移動しました`
+          : `${name}さんが座席 ${seat.label} に着席しました`
+        setAlert({ type: 'success', message })
+      }
     }
   }
 
   const handleCheckInWithName = async (seat, name) => {
     setCheckInLoading(true)
+    setAlert(null)
+    let errorOccurred = false
+    let errorMessage = ''
+
     try {
       const response = await fetch(`/seats/${seat.id}/check_in`, {
         method: 'POST',
@@ -160,7 +183,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       if (!response.ok) {
         const errorData = await response.text()
         console.error('Check-in error response:', errorData)
-        throw new Error(`エラー: ${response.status}`)
+        errorOccurred = true
+        errorMessage = 'チェックインに失敗しました。もう一度お試しください。'
+        throw new Error(errorMessage)
       }
 
       setSeats(prev => prev.map(s =>
@@ -172,14 +197,23 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       if (!current_user) {
         setVisitorName(name)
       }
-      setAlert({ type: 'success', message: `${name}さんがチェックインしました` })
-      setTimeout(() => setAlert(null), 2000)
       setSelectedSeat(null)
     } catch (err) {
       console.error('Check-in error caught:', err)
-      setAlert({ type: 'error', message: 'チェックインに失敗しました。もう一度お試しください。' })
+      errorOccurred = true
+      if (!errorMessage) {
+        errorMessage = err.message || 'チェックインに失敗しました。もう一度お試しください。'
+      }
     } finally {
+      // 処理完了：スピナーを止める
       setCheckInLoading(false)
+
+      // 処理完了後にアラートを表示
+      if (errorOccurred) {
+        setAlert({ type: 'error', message: errorMessage })
+      } else {
+        setAlert({ type: 'success', message: `${name}さんがチェックインしました` })
+      }
     }
   }
 
@@ -190,6 +224,10 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
     }
 
     setCheckInLoading(true)
+    setAlert(null)
+    let errorOccurred = false
+    let errorMessage = ''
+
     try {
       // 名前変更の場合
       if (selectedSeat.id === -1) {
@@ -203,11 +241,12 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         })
 
         if (!response.ok) {
-          throw new Error(`エラー: ${response.status}`)
+          errorOccurred = true
+          errorMessage = '名前の変更に失敗しました。もう一度お試しください。'
+          throw new Error(errorMessage)
         }
 
         setVisitorName(nameInput)
-        setAlert({ type: 'success', message: `名前を${nameInput}さんに変更しました` })
       } else {
         // 通常のチェックイン
         const response = await fetch(`/seats/${selectedSeat.id}/check_in`, {
@@ -220,7 +259,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         })
 
         if (!response.ok) {
-          throw new Error(`エラー: ${response.status}`)
+          errorOccurred = true
+          errorMessage = 'チェックインに失敗しました。もう一度お試しください。'
+          throw new Error(errorMessage)
         }
 
         setSeats(prev => prev.map(s =>
@@ -232,22 +273,82 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         if (!current_user) {
           setVisitorName(nameInput)
         }
-        setAlert({ type: 'success', message: `${nameInput}さんがチェックインしました` })
       }
 
       setSelectedSeat(null)
       setNameInput('')
-      setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      setAlert({ type: 'error', message: 'エラーが発生しました。もう一度お試しください。' })
       console.error('Error:', err)
+      errorOccurred = true
+      if (!errorMessage) {
+        errorMessage = 'エラーが発生しました。もう一度お試しください。'
+      }
     } finally {
+      // 処理完了：スピナーを止める
       setCheckInLoading(false)
+
+      // 処理完了後にアラートを表示
+      if (errorOccurred) {
+        setAlert({ type: 'error', message: errorMessage })
+      } else {
+        if (selectedSeat && selectedSeat.id === -1) {
+          setAlert({ type: 'success', message: `名前を${nameInput}さんに変更しました` })
+        } else {
+          setAlert({ type: 'success', message: `${nameInput}さんがチェックインしました` })
+        }
+      }
+    }
+  }
+
+  const handleRevokePermission = async (user) => {
+    setCheckInLoading(true)
+    setAlert(null)
+    let errorOccurred = false
+    let errorMessage = ''
+
+    try {
+      const response = await fetch(`/rooms/${room.token}/revoke_permission`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': getCsrfToken()
+        },
+        body: JSON.stringify({ user_id: user.id })
+      })
+
+      if (!response.ok) {
+        errorOccurred = true
+        errorMessage = '権限剥奪に失敗しました。もう一度お試しください。'
+        throw new Error(errorMessage)
+      }
+
+      setPermittedUsers(prev => prev.filter(u => u.id !== user.id))
+    } catch (err) {
+      console.error('Revoke permission error:', err)
+      errorOccurred = true
+      if (!errorMessage) {
+        errorMessage = '権限剥奪に失敗しました。もう一度お試しください。'
+      }
+    } finally {
+      // 処理完了：スピナーを止める
+      setCheckInLoading(false)
+      setRevokePermissionUser(null)
+
+      // 処理完了後にアラートを表示
+      if (errorOccurred) {
+        setAlert({ type: 'error', message: errorMessage })
+      } else {
+        setAlert({ type: 'success', message: `${user.name}さんの権限を剥奪しました` })
+      }
     }
   }
 
   const handleCheckOut = async (seat) => {
     setCheckInLoading(true)
+    setAlert(null)
+    let errorOccurred = false
+    let errorMessage = ''
+
     try {
       const response = await fetch(`/seats/${seat.id}/check_out`, {
         method: 'POST',
@@ -258,7 +359,9 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       })
 
       if (!response.ok) {
-        throw new Error(`エラー: ${response.status}`)
+        errorOccurred = true
+        errorMessage = 'チェックアウトに失敗しました。もう一度お試しください。'
+        throw new Error(errorMessage)
       }
 
       setSeats(prev => prev.map(s =>
@@ -266,13 +369,22 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
           ? { ...s, occupied: false, occupant_name: null }
           : s
       ))
-      setAlert({ type: 'success', message: 'チェックアウトしました' })
-      setTimeout(() => setAlert(null), 2000)
     } catch (err) {
-      setAlert({ type: 'error', message: 'チェックアウトに失敗しました。もう一度お試しください。' })
       console.error('Check-out error:', err)
+      errorOccurred = true
+      if (!errorMessage) {
+        errorMessage = 'チェックアウトに失敗しました。もう一度お試しください。'
+      }
     } finally {
+      // 処理完了：スピナーを止める
       setCheckInLoading(false)
+
+      // 処理完了後にアラートを表示
+      if (errorOccurred) {
+        setAlert({ type: 'error', message: errorMessage })
+      } else {
+        setAlert({ type: 'success', message: 'チェックアウトしました' })
+      }
     }
   }
 
@@ -753,31 +865,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
             </p>
             <div className="flex flex-col gap-2">
               <button
-                onClick={async () => {
-                  try {
-                    const response = await fetch(`/rooms/${room.token}/revoke_permission`, {
-                      method: 'DELETE',
-                      headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-Token': getCsrfToken()
-                      },
-                      body: JSON.stringify({ user_id: revokePermissionUser.id })
-                    })
-
-                    if (!response.ok) {
-                      throw new Error(`エラー: ${response.status}`)
-                    }
-
-                    setPermittedUsers(prev => prev.filter(u => u.id !== revokePermissionUser.id))
-                    setAlert({ type: 'success', message: `${revokePermissionUser.name}さんの権限を剥奪しました` })
-                    setTimeout(() => setAlert(null), 2000)
-                  } catch (err) {
-                    setAlert({ type: 'error', message: '権限剥奪に失敗しました' })
-                    console.error('Revoke permission error:', err)
-                  } finally {
-                    setRevokePermissionUser(null)
-                  }
-                }}
+                onClick={() => handleRevokePermission(revokePermissionUser)}
                 className="py-2 bg-red-500 text-white font-medium rounded-lg
                          hover:bg-red-600 transition-colors">
                 権限を剥奪
