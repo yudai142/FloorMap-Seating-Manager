@@ -30,7 +30,8 @@ Rails.application.configure do
 
   # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
   config.force_ssl = true
-  config.hosts << ENV.fetch('RAILS_HOSTNAME', 'floormap.example.com')
+  config.hosts << ENV.fetch('RAILS_HOSTNAME', 'localhost')
+  config.hosts << /.*\.onrender\.com/ if ENV['RENDER'].present?
 
   # Skip http-to-https redirect for the default health check endpoint.
   # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
