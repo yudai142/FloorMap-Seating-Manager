@@ -581,41 +581,57 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
                       }
                       return null
                     })}
-                    {seats.map((seat) => (
-                      <g
-                        key={seat.id}
-                        transform={`translate(${seat.x}, ${seat.y})`}
-                        onClick={() => handleSeatClick(seat)}
-                        className="cursor-pointer"
-                      >
-                        <circle
-                          r="12"
-                          fill={seat.occupied ? '#f87171' : '#4ade80'}
-                          stroke="#333"
-                          strokeWidth="1"
-                        />
-                        <text
-                          x="16"
-                          y="4"
-                          fontSize="10"
-                          fill="#000"
-                          className="pointer-events-none"
+                    {seats.map((seat) => {
+                      const autoCheckoutTime = seat.auto_checkout_at
+                        ? new Date(seat.auto_checkout_at).toLocaleTimeString('ja-JP', { hour: '2-digit', minute: '2-digit' })
+                        : null
+                      return (
+                        <g
+                          key={seat.id}
+                          transform={`translate(${seat.x}, ${seat.y})`}
+                          onClick={() => handleSeatClick(seat)}
+                          className="cursor-pointer"
                         >
-                          {seat.label}
-                        </text>
-                        {seat.occupied && (
+                          <circle
+                            r="12"
+                            fill={seat.occupied ? '#f87171' : '#4ade80'}
+                            stroke="#333"
+                            strokeWidth="1"
+                          />
                           <text
                             x="16"
-                            y="14"
-                            fontSize="8"
-                            fill="#666"
+                            y="4"
+                            fontSize="10"
+                            fill="#000"
                             className="pointer-events-none"
                           >
-                            {seat.occupant_name}
+                            {seat.label}
                           </text>
-                        )}
-                      </g>
-                    ))}
+                          {seat.occupied && (
+                            <text
+                              x="16"
+                              y="14"
+                              fontSize="8"
+                              fill="#666"
+                              className="pointer-events-none"
+                            >
+                              {seat.occupant_name}
+                            </text>
+                          )}
+                          {autoCheckoutTime && (
+                            <text
+                              x="16"
+                              y="22"
+                              fontSize="7"
+                              fill="#0891b2"
+                              className="pointer-events-none font-semibold"
+                            >
+                              {autoCheckoutTime}離席
+                            </text>
+                          )}
+                        </g>
+                      )
+                    })}
                         </svg>
                       </TransformComponent>
                     </TransformWrapper>

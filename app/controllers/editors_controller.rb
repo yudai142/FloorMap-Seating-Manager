@@ -6,7 +6,7 @@ class EditorsController < ApplicationController
     render inertia: 'Editor/Canvas', props: {
       rooms: @rooms.as_json(only: %i[id name width height token]),
       room: @room&.as_json(only: %i[id name width height shapes_data token]),
-      initialSeats: @room&.seats&.as_json(only: %i[id x y label]) || [],
+      initialSeats: @room&.seats&.as_json(only: %i[id x y label occupied occupant_name auto_checkout_at]) || [],
       current_user: current_user&.as_json(only: %i[id name email])
     }
   rescue ActiveRecord::RecordNotFound
