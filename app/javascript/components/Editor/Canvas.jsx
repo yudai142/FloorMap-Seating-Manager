@@ -24,6 +24,8 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
   const [zoom, setZoom] = useState(1)
   const [history, setHistory] = useState([])
   const [historyIndex, setHistoryIndex] = useState(-1)
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
   const svgRef = useRef(null)
   const svgContainerRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -35,8 +37,15 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
       setShapes(loadedShapes)
       setHistory([{ seats, shapes: loadedShapes }])
       setHistoryIndex(0)
+      setHasUnsavedChanges(false)
     }
   }, [currentRoom?.id])
+
+  useEffect(() => {
+    if (historyIndex > 0) {
+      setHasUnsavedChanges(true)
+    }
+  }, [historyIndex])
 
   useEffect(() => {
     if (!isResizing) return
@@ -177,6 +186,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
       return
     }
 
+    setIsSaving(true)
     try {
       const payload = { room: { shapes_data: shapes } }
       console.log('📤 Sending payload:', payload)
@@ -201,11 +211,14 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
       const responseData = await response.json()
       console.log('✅ Response data:', responseData)
       setCurrentRoom(responseData)
+      setHasUnsavedChanges(false)
       setAlert({ type: 'success', message: '図形を保存しました' })
       setTimeout(() => setAlert(null), 2000)
     } catch (err) {
       setAlert({ type: 'error', message: err.message })
       console.error('Shape save error:', err)
+    } finally {
+      setIsSaving(false)
     }
   }
 
@@ -882,7 +895,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
             </button>
           </div>
 
-          <div className="flex gap-6 flex-wrap items-center">
+          <div className="flex gap-6 flex-wrap items-center justify-between">
             <div className="flex gap-2">
               <button
                 onClick={handleUndo}
@@ -898,14 +911,9 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
                 className="px-3 py-1 rounded font-medium bg-slate-200 text-slate-700 hover:bg-slate-300 text-sm disabled:opacity-50 disabled:cursor-not-allowed">
                 ↷ やり直す
               </button>
-              <button
-                onClick={handleSaveShapes}
-                className="px-3 py-1 rounded font-medium bg-green-500 text-white hover:bg-green-600 text-sm">
-                💾 保存
-              </button>
             </div>
 
-            <div className="flex gap-3">
+            <div className="flex gap-3 items-center">
               <label className="text-sm font-medium text-slate-700">描画方法:</label>
             <button
               onClick={() => setDrawMode('click')}
@@ -948,6 +956,17 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
               リセット
             </button>
             </div>
+
+            <button
+              onClick={handleSaveShapes}
+              disabled={!hasUnsavedChanges || isSaving}
+              className={`px-6 py-3 rounded-lg font-bold text-lg transition-colors ${
+                hasUnsavedChanges && !isSaving
+                  ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
+                  : 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50'
+              }`}>
+              💾 保存
+            </button>
           </div>
         </div>
 
