@@ -350,6 +350,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
         const distance = distanceToLine(x, y, shape.x1, shape.y1, shape.x2, shape.y2)
         if (distance < tolerance) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       } else if (shape.type === 'rectangle') {
@@ -358,18 +359,21 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
           y >= shape.y && y <= shape.y + shape.height
         ) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       } else if (shape.type === 'circle') {
         const distance = Math.sqrt(Math.pow(x - shape.cx, 2) + Math.pow(y - shape.cy, 2))
         if (distance <= shape.r + tolerance) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       } else if (shape.type === 'arrow') {
         const distance = distanceToLine(x, y, shape.x1, shape.y1, shape.x2, shape.y2)
         if (distance < tolerance) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       } else if (shape.type === 'text') {
@@ -380,11 +384,13 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
           y >= shape.y - textHeight && y <= shape.y
         ) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       } else if (shape.type === 'polygon') {
         if (isPointInPolygon(x, y, shape.pointsArray)) {
           setShapes(shapes.filter((_, idx) => idx !== i))
+          setHasUnsavedChanges(true)
           return
         }
       }
@@ -626,6 +632,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
       }
 
       setSeats(seats.filter(s => s.id !== seat.id))
+      setHasUnsavedChanges(true)
     } catch (err) {
       setAlert({ type: 'error', message: err.message })
       console.error('Seat deletion error:', err)
@@ -647,6 +654,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
       setSeats(seats.map(s =>
         s.id === dragging.id ? { ...s, x: Math.round(newX), y: Math.round(newY) } : s
       ))
+      setHasUnsavedChanges(true)
     } else if (drawingStart) {
       if (tool === 'line') {
         setPreview({
