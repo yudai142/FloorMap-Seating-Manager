@@ -967,11 +967,11 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
 
             <button
               onClick={handleSaveShapes}
-              disabled={!hasUnsavedChanges || isSaving}
+              disabled={isSaving}
               className={`px-6 py-3 rounded-lg font-bold text-lg transition-colors ${
-                hasUnsavedChanges && !isSaving
-                  ? 'bg-green-500 text-white hover:bg-green-600 cursor-pointer'
-                  : 'bg-slate-300 text-slate-500 cursor-not-allowed opacity-50'
+                !isSaving
+                  ? 'bg-slate-300 text-slate-500 hover:bg-slate-400 cursor-pointer'
+                  : 'bg-slate-300 text-slate-500 cursor-wait opacity-50'
               }`}>
               💾 保存
             </button>
