@@ -26,6 +26,10 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
   const [historyIndex, setHistoryIndex] = useState(-1)
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
   const [isSaving, setIsSaving] = useState(false)
+  const [selectionBox, setSelectionBox] = useState(null)
+  const [selectedElements, setSelectedElements] = useState([])
+  const [selectionStart, setSelectionStart] = useState(null)
+  const [movingSelection, setMovingSelection] = useState(false)
   const svgRef = useRef(null)
   const svgContainerRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -323,12 +327,42 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
   }
 
   const handleCanvasMouseDown = (e) => {
-    if (!currentRoom || isCreating || drawMode !== 'drag') return
-    if (tool !== 'line' && tool !== 'rectangle' && tool !== 'circle' && tool !== 'arrow') return
+    if (!currentRoom) return
 
     const rect = svgRef.current.getBoundingClientRect()
     const x = Math.round(e.clientX - rect.left)
     const y = Math.round(e.clientY - rect.top)
+
+    if (tool === 'select') {
+      const clickedElement = selectedElements.find(el => {
+        if (el.type === 'seat') {
+          const seat = seats.find(s => s.id === el.id)
+          return seat && Math.abs(seat.x - x) < 15 && Math.abs(seat.y - y) < 15
+        } else if (el.type === 'shape') {
+          const shape = shapes.find(s => s.id === el.id)
+          if (!shape) return false
+          if (shape.type === 'circle') {
+            return Math.sqrt(Math.pow(x - shape.cx, 2) + Math.pow(y - shape.cy, 2)) <= shape.r + 5
+          } else if (shape.type === 'rectangle') {
+            return x >= shape.x && x <= shape.x + shape.width && y >= shape.y && y <= shape.y + shape.height
+          }
+        }
+        return false
+      })
+
+      if (clickedElement || selectedElements.length > 0) {
+        setMovingSelection(true)
+        setSelectionStart({ x, y })
+      } else {
+        setSelectionStart({ x, y })
+        setSelectedElements([])
+        setSelectionBox(null)
+      }
+      return
+    }
+
+    if (isCreating || drawMode !== 'drag') return
+    if (tool !== 'line' && tool !== 'rectangle' && tool !== 'circle' && tool !== 'arrow') return
 
     if (tool === 'line') {
       handleLineStart(x, y)
@@ -647,7 +681,57 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
     const x = Math.round(e.clientX - rect.left)
     const y = Math.round(e.clientY - rect.top)
 
-    if (dragging) {
+    if (tool === 'select' && selectionStart && !movingSelection) {
+      setSelectionBox({
+        x: Math.min(selectionStart.x, x),
+        y: Math.min(selectionStart.y, y),
+        width: Math.abs(x - selectionStart.x),
+        height: Math.abs(y - selectionStart.y)
+      })
+    } else if (movingSelection) {
+      const deltaX = x - selectionStart.x
+      const deltaY = y - selectionStart.y
+
+      setSeats(seats.map(s => {
+        if (selectedElements.some(el => el.type === 'seat' && el.id === s.id)) {
+          return {
+            ...s,
+            x: Math.max(0, Math.min(s.x + deltaX, currentRoom.width)),
+            y: Math.max(0, Math.min(s.y + deltaY, currentRoom.height))
+          }
+        }
+        return s
+      }))
+
+      setShapes(shapes.map(shape => {
+        if (selectedElements.some(el => el.type === 'shape' && el.id === shape.id)) {
+          const newShape = { ...shape }
+          if (shape.type === 'line' || shape.type === 'arrow') {
+            newShape.x1 = Math.max(0, shape.x1 + deltaX)
+            newShape.y1 = Math.max(0, shape.y1 + deltaY)
+            newShape.x2 = Math.max(0, shape.x2 + deltaX)
+            newShape.y2 = Math.max(0, shape.y2 + deltaY)
+          } else if (shape.type === 'rectangle' || shape.type === 'text') {
+            newShape.x = Math.max(0, shape.x + deltaX)
+            newShape.y = Math.max(0, shape.y + deltaY)
+          } else if (shape.type === 'circle') {
+            newShape.cx = Math.max(0, shape.cx + deltaX)
+            newShape.cy = Math.max(0, shape.cy + deltaY)
+          } else if (shape.type === 'polygon') {
+            newShape.pointsArray = shape.pointsArray.map(p => ({
+              x: Math.max(0, p.x + deltaX),
+              y: Math.max(0, p.y + deltaY)
+            }))
+            newShape.points = newShape.pointsArray.map(p => `${p.x},${p.y}`).join(' ')
+          }
+          return newShape
+        }
+        return shape
+      }))
+
+      setSelectionStart({ x, y })
+      setHasUnsavedChanges(true)
+    } else if (dragging) {
       const newX = Math.max(0, Math.min(x - dragging.offsetX, currentRoom.width))
       const newY = Math.max(0, Math.min(y - dragging.offsetY, currentRoom.height))
 
@@ -693,7 +777,67 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
   }
 
   const handleMouseUp = async (e) => {
-    if (dragging) {
+    if (tool === 'select' && selectionStart && !movingSelection) {
+      if (selectionBox) {
+        const newSelected = []
+
+        seats.forEach(seat => {
+          if (
+            seat.x >= selectionBox.x &&
+            seat.x <= selectionBox.x + selectionBox.width &&
+            seat.y >= selectionBox.y &&
+            seat.y <= selectionBox.y + selectionBox.height
+          ) {
+            newSelected.push({ type: 'seat', id: seat.id })
+          }
+        })
+
+        shapes.forEach(shape => {
+          let isSelected = false
+          if (shape.type === 'line' || shape.type === 'arrow') {
+            if (
+              shape.x1 >= selectionBox.x && shape.x1 <= selectionBox.x + selectionBox.width &&
+              shape.y1 >= selectionBox.y && shape.y1 <= selectionBox.y + selectionBox.height &&
+              shape.x2 >= selectionBox.x && shape.x2 <= selectionBox.x + selectionBox.width &&
+              shape.y2 >= selectionBox.y && shape.y2 <= selectionBox.y + selectionBox.height
+            ) {
+              isSelected = true
+            }
+          } else if (shape.type === 'rectangle') {
+            if (
+              shape.x >= selectionBox.x && shape.x + shape.width <= selectionBox.x + selectionBox.width &&
+              shape.y >= selectionBox.y && shape.y + shape.height <= selectionBox.y + selectionBox.height
+            ) {
+              isSelected = true
+            }
+          } else if (shape.type === 'circle') {
+            if (
+              shape.cx - shape.r >= selectionBox.x && shape.cx + shape.r <= selectionBox.x + selectionBox.width &&
+              shape.cy - shape.r >= selectionBox.y && shape.cy + shape.r <= selectionBox.y + selectionBox.height
+            ) {
+              isSelected = true
+            }
+          } else if (shape.type === 'text') {
+            const textWidth = shape.text.length * 8
+            if (
+              shape.x >= selectionBox.x && shape.x + textWidth <= selectionBox.x + selectionBox.width &&
+              shape.y - 16 >= selectionBox.y && shape.y <= selectionBox.y + selectionBox.height
+            ) {
+              isSelected = true
+            }
+          }
+          if (isSelected) {
+            newSelected.push({ type: 'shape', id: shape.id })
+          }
+        })
+
+        setSelectedElements(newSelected)
+      }
+      setSelectionStart(null)
+      setSelectionBox(null)
+    } else if (movingSelection) {
+      setMovingSelection(false)
+    } else if (dragging) {
       const seat = seats.find(s => s.id === dragging.id)
       if (seat) {
         try {
@@ -829,6 +973,19 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
 
         <div className="mb-6">
           <div className="mb-3 flex gap-3">
+            <button
+              onClick={() => {
+                setTool('select')
+                setSelectedElements([])
+                setSelectionBox(null)
+              }}
+              className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                tool === 'select'
+                  ? 'bg-cyan-500 text-white'
+                  : 'bg-slate-200 text-slate-700 hover:bg-slate-300'
+              }`}>
+              選択
+            </button>
             <button
               onClick={() => setTool('seat')}
               className={`px-4 py-2 rounded-lg font-medium transition-colors ${
@@ -999,6 +1156,7 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
                 width={roomSizeInput.width}
                 height={roomSizeInput.height}
                 className={`border border-slate-300 rounded-lg bg-slate-50 block select-none ${
+                  tool === 'select' ? (selectedElements.length > 0 ? 'cursor-move' : 'cursor-cell') :
                   dragging ? 'cursor-grabbing' : isResizing ? 'cursor-nwse-resize' : isCreating ? 'cursor-wait' : 'cursor-crosshair'
                 }`}
                 onClick={handleCanvasClick}
@@ -1214,6 +1372,74 @@ export default function Canvas({ rooms, room, initialSeats, current_user }) {
                   </g>
                 )
               })}
+
+              {selectedElements.map(el => {
+                if (el.type === 'seat') {
+                  const seat = seats.find(s => s.id === el.id)
+                  if (!seat) return null
+                  return (
+                    <circle
+                      key={`selected-seat-${el.id}`}
+                      cx={seat.x}
+                      cy={seat.y}
+                      r="16"
+                      fill="none"
+                      stroke="#06b6d4"
+                      strokeWidth="2"
+                      strokeDasharray="4,4"
+                      pointerEvents="none"
+                    />
+                  )
+                } else if (el.type === 'shape') {
+                  const shape = shapes.find(s => s.id === el.id)
+                  if (!shape) return null
+                  if (shape.type === 'rectangle') {
+                    return (
+                      <rect
+                        key={`selected-shape-${el.id}`}
+                        x={shape.x - 2}
+                        y={shape.y - 2}
+                        width={shape.width + 4}
+                        height={shape.height + 4}
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="2"
+                        strokeDasharray="4,4"
+                        pointerEvents="none"
+                      />
+                    )
+                  } else if (shape.type === 'circle') {
+                    return (
+                      <circle
+                        key={`selected-shape-${el.id}`}
+                        cx={shape.cx}
+                        cy={shape.cy}
+                        r={shape.r + 2}
+                        fill="none"
+                        stroke="#06b6d4"
+                        strokeWidth="2"
+                        strokeDasharray="4,4"
+                        pointerEvents="none"
+                      />
+                    )
+                  }
+                }
+                return null
+              })}
+
+              {selectionBox && (
+                <rect
+                  x={selectionBox.x}
+                  y={selectionBox.y}
+                  width={selectionBox.width}
+                  height={selectionBox.height}
+                  fill="rgba(6, 182, 212, 0.1)"
+                  stroke="#06b6d4"
+                  strokeWidth="2"
+                  strokeDasharray="5,5"
+                  pointerEvents="none"
+                />
+              )}
             </svg>
 
               {/* 右エッジ（幅のみ変更） */}
