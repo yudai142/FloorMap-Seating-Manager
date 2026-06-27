@@ -41,6 +41,8 @@ make down
 | `make seed` | DB シード実行 |
 | `make console` | Rails コンソール起動 |
 | `make update-deps` | Gemfile/package.json 更新後にビルド |
+| `make clean-node` | npm モジュールリセット（@rollup エラー時） |
+| `make rebuild` | npm rebuild（node-gyp エラー時） |
 | `make clean` | コンテナ・ボリューム削除（完全リセット） |
 
 ## 🔄 自動反映の仕組み
@@ -85,6 +87,30 @@ make setup
 `docker-compose down -v` で volume が削除されると DB がリセットされます。
 
 通常は `make down`（volume 保持）を使用してください。
+
+### npm エラー: Cannot find module @rollup/rollup-linux-arm64-gnu
+
+**原因：** ホスト（macOS ARM64）とコンテナ（Linux ARM64）で異なる node_modules バイナリが混在している。
+
+**解決方法：**
+
+```bash
+make clean-node
+```
+
+node_modules volume をリセットして、コンテナ内で再インストールします。
+
+### npm/node-gyp エラー
+
+**原因：** ネイティブバイナリのビルド失敗
+
+**解決方法：**
+
+```bash
+make rebuild
+```
+
+コンテナ内で npm rebuild を実行します。
 
 ## 📍 ホストマシンでの開発
 
