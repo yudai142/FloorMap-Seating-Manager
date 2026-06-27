@@ -1,16 +1,41 @@
-.PHONY: dev build up down logs
+.PHONY: setup dev down logs clean migrate seed console update-deps
 
+## セットアップ（最初の1回のみ）
+setup:
+	docker-compose up --build
+
+## 開発環境を起動（毎回これを使用）
 dev:
-	docker compose up --build
+	docker-compose up
 
-build:
-	docker compose build
-
-up:
-	docker compose up -d
-
+## コンテナを停止
 down:
-	docker compose down
+	docker-compose down
 
+## ログを表示（web サービスのみ）
 logs:
-	docker compose logs -f
+	docker-compose logs -f web
+
+## ログを表示（全サービス）
+logs-all:
+	docker-compose logs -f
+
+## コンテナを停止してボリュームを削除（完全リセット）
+clean:
+	docker-compose down -v
+
+## DB マイグレーション実行
+migrate:
+	docker-compose exec web bundle exec rails db:migrate
+
+## DB シード実行
+seed:
+	docker-compose exec web bundle exec rails db:seed
+
+## Rails コンソール起動
+console:
+	docker-compose exec web bundle exec rails console
+
+## 依存関係を更新（Gemfile・package.json 変更後）
+update-deps:
+	docker-compose up --build
