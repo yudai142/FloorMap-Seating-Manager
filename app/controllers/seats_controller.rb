@@ -25,16 +25,20 @@ class SeatsController < ApplicationController
     @seat = Seat.find(params[:id])
     update_attrs = { occupied: true, occupant_name: check_in_params[:occupant_name] }
     update_attrs[:occupant_id] = current_user.id if current_user
+    update_attrs[:auto_checkout_at] = check_in_params[:auto_checkout_at] if check_in_params[:auto_checkout_at]
 
     if @seat.update(update_attrs)
       # 非ログインユーザーの場合、セッションに名前を保存
       session[:visitor_name] = check_in_params[:occupant_name] if current_user.nil?
 
+      # 自動離席をスケジュール
+      @seat.schedule_auto_checkout if @seat.has_auto_checkout?
+
       # ブロードキャスト座席更新（Redis が利用可能な場合のみ）
       begin
         ActionCable.server.broadcast("room_#{@seat.room_id}", {
           type: 'seat_update',
-          seat: @seat.as_json(only: %i[id x y label occupied occupant_name])
+          seat: @seat.as_json(only: %i[id x y label occupied occupant_name auto_checkout_at])
         })
       rescue => e
         Rails.logger.error("ActionCable broadcast failed: #{e.message}")
@@ -54,7 +58,7 @@ class SeatsController < ApplicationController
         Rails.logger.error("BroadcastNotificationJob failed: #{e.message}")
       end
 
-      render json: @seat.as_json(only: %i[id x y label occupied occupant_name]), status: :ok
+      render json: @seat.as_json(only: %i[id x y label occupied occupant_name auto_checkout_at]), status: :ok
     else
       render json: { errors: @seat.errors.full_messages }, status: :unprocessable_entity
     end
@@ -153,7 +157,7 @@ class SeatsController < ApplicationController
   end
 
   def check_in_params
-    params.permit(:occupant_name)
+    params.permit(:occupant_name, :auto_checkout_at)
   end
 
   def export_csv

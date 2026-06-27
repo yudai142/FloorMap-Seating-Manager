@@ -15,6 +15,8 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
   const [confirmCheckOut, setConfirmCheckOut] = useState(null)
   const [permittedUsers, setPermittedUsers] = useState(initialPermittedUsers || [])
   const [revokePermissionUser, setRevokePermissionUser] = useState(null)
+  const [autoCheckoutOption, setAutoCheckoutOption] = useState('none')
+  const [customAutoCheckoutMinutes, setCustomAutoCheckoutMinutes] = useState(60)
 
   const isRoomCreator = initialIsRoomCreator
   const hasPermission = initialHasPermission
@@ -22,6 +24,18 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
 
   const getCsrfToken = () => {
     return document.querySelector('meta[name="csrf-token"]').content
+  }
+
+  const getAutoCheckoutTime = () => {
+    if (autoCheckoutOption === 'none') return null
+    const now = new Date()
+    let minutes = 0
+    if (autoCheckoutOption === '30min') minutes = 30
+    else if (autoCheckoutOption === '1hour') minutes = 60
+    else if (autoCheckoutOption === '2hours') minutes = 120
+    else if (autoCheckoutOption === 'custom') minutes = parseInt(customAutoCheckoutMinutes)
+    const checkoutTime = new Date(now.getTime() + minutes * 60000)
+    return checkoutTime.toISOString()
   }
 
   const handleCopyUrl = async () => {
@@ -113,13 +127,18 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       }
 
       // 新しい座席にチェックイン
+      const checkInData = { occupant_name: name }
+      const autoCheckoutTime = getAutoCheckoutTime()
+      if (autoCheckoutTime) {
+        checkInData.auto_checkout_at = autoCheckoutTime
+      }
       const checkInResponse = await fetch(`/seats/${seat.id}/check_in`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': getCsrfToken()
         },
-        body: JSON.stringify({ occupant_name: name })
+        body: JSON.stringify(checkInData)
       })
 
       console.log('Check-in response:', { status: checkInResponse.status, ok: checkInResponse.ok })
@@ -168,13 +187,18 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
     let errorMessage = ''
 
     try {
+      const checkInData = { occupant_name: name }
+      const autoCheckoutTime = getAutoCheckoutTime()
+      if (autoCheckoutTime) {
+        checkInData.auto_checkout_at = autoCheckoutTime
+      }
       const response = await fetch(`/seats/${seat.id}/check_in`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'X-CSRF-Token': getCsrfToken()
         },
-        body: JSON.stringify({ occupant_name: name })
+        body: JSON.stringify(checkInData)
       })
 
       console.log('Check-in response:', { status: response.status, ok: response.ok })
@@ -249,13 +273,18 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
         setVisitorName(nameInput)
       } else {
         // 通常のチェックイン
+        const checkInData = { occupant_name: nameInput }
+        const autoCheckoutTime = getAutoCheckoutTime()
+        if (autoCheckoutTime) {
+          checkInData.auto_checkout_at = autoCheckoutTime
+        }
         const response = await fetch(`/seats/${selectedSeat.id}/check_in`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'X-CSRF-Token': getCsrfToken()
           },
-          body: JSON.stringify({ occupant_name: nameInput })
+          body: JSON.stringify(checkInData)
         })
 
         if (!response.ok) {
@@ -671,7 +700,7 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
       {selectedSeat && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4"
           onClick={() => !checkInLoading && setSelectedSeat(null)}>
-          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full"
+          <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full max-h-screen overflow-y-auto"
             onClick={(e) => e.stopPropagation()}>
             <h2 className="text-lg font-semibold text-slate-800 mb-1">
               {selectedSeat.id === -1 ? '名前を変更' : `${selectedSeat.label} にチェックイン`}
@@ -704,6 +733,77 @@ export default function RoomsShow({ room, seats: initialSeats, current_user, vis
                        disabled:bg-slate-100 disabled:text-slate-500"
               autoFocus
             />
+
+            {selectedSeat.id !== -1 && (
+              <div className="mb-4 p-4 border border-slate-200 rounded-lg bg-slate-50">
+                <label className="block text-sm font-semibold text-slate-700 mb-3">
+                  自動離席設定
+                </label>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="none"
+                      checked={autoCheckoutOption === 'none'}
+                      onChange={(e) => setAutoCheckoutOption(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">通常着席</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="30min"
+                      checked={autoCheckoutOption === '30min'}
+                      onChange={(e) => setAutoCheckoutOption(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">30分後に自動離席</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="1hour"
+                      checked={autoCheckoutOption === '1hour'}
+                      onChange={(e) => setAutoCheckoutOption(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">1時間後に自動離席</span>
+                  </label>
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="2hours"
+                      checked={autoCheckoutOption === '2hours'}
+                      onChange={(e) => setAutoCheckoutOption(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">2時間後に自動離席</span>
+                  </label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="radio"
+                      value="custom"
+                      checked={autoCheckoutOption === 'custom'}
+                      onChange={(e) => setAutoCheckoutOption(e.target.value)}
+                      className="w-4 h-4"
+                    />
+                    <span className="text-sm text-slate-700">カスタム（分）:</span>
+                    <input
+                      type="number"
+                      min="1"
+                      max="1440"
+                      value={customAutoCheckoutMinutes}
+                      onChange={(e) => setCustomAutoCheckoutMinutes(e.target.value)}
+                      disabled={autoCheckoutOption !== 'custom'}
+                      className="w-16 px-2 py-1 border border-slate-300 rounded text-sm
+                               disabled:bg-slate-100 disabled:text-slate-500"
+                    />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-3">
               <button
                 onClick={handleCheckIn}
